@@ -107,6 +107,14 @@ export const getUtcStartOfHour = (date: Date | string) => {
   ));
 }
 
+export function addMinutesToUtc(date: Date | string, minutes: number) {
+  if (typeof date === 'string') {
+    date = getDateFromIsoString(date);
+  }
+
+  return new Date(date.getTime() + minutes * 60 * 1000)
+}
+
 export function getStartAndEndDateBasedOnTime(dateStr: string, timeStr: string, endAndStartOfUnit = false) {
   const time = getValidTime(timeStr)
 
@@ -193,4 +201,33 @@ export function getStartMiddleAndEndDateBasedOnTime(
     end,
     truncInterval: time === Times.Last24h ? 'hour' as const : 'day' as const,
   }
+}
+
+export type UnitTimeGroup = 'hour' | 'day' | 'week' | 'month' | 'year';
+export function formatDate(dateString: string, type: UnitTimeGroup, includeMonth = false): string {
+  const date = new Date(dateString);
+
+  if (type === "day") {
+    if (includeMonth) {
+      return date.toLocaleString("en-US", {
+        month: "short",
+        day: "2-digit",
+        timeZone: "UTC",
+      }).replace(',', '');
+    }
+
+    return date.getUTCDate().toString();
+  }
+
+  if (type === "hour") {
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      hour12: false,
+      timeZone: "UTC",
+    }).replace(',', '');
+  }
+
+  throw new Error("Invalid type. Use 'day' or 'hour'.");
 }

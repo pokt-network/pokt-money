@@ -8,7 +8,9 @@
   --secondary-v2-foreground: #B8B8B8;
   --border: #393940;
   --success: #00CF9D;
-  --error: #ff5e88;
+  --success-background: rgb(34 197 94 / 0.2);
+  --error: #f87171;
+  --error-background: rgb(239 68 68 / 0.2);
   --radius: 0.625rem;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);

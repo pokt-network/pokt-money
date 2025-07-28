@@ -2,7 +2,6 @@
 
 import useFetchOnBlock, { DocumentNodeData } from "@/hooks/useFetchOnBlock";
 import {
-  currentSupplyDocument,
   getSupplyMintBurnAndChangesVariables,
   supplyMintBurnAndChangesDocument,
 } from '../operations'
@@ -13,6 +12,7 @@ import RetryError from '@/components/ErrorRetry'
 import { formatUpokt } from '@/utils/formatAmounts'
 import Big from 'big.js'
 import clsx from 'clsx'
+import { Minus, TrendingDown, TrendingUp } from 'lucide-react'
 
 interface ChangeProps {
   previous: string | number
@@ -22,35 +22,68 @@ interface ChangeProps {
 
 function Change({previous, current, label}: ChangeProps) {
   const diff = new Big(current).minus(previous)
-  const changePercentage = diff.div(previous).mul(100)
+  const changePercentage = Number(previous) === 0 ? new Big(100) : diff.div(previous).mul(100)
+
+  let arrow: React.ReactNode = null
+
+  if (diff.gt(0)) {
+    arrow = (
+      <TrendingUp className={'text-[color:var(--success)] w-3 h-4 rotate-[-10deg]'} />
+    )
+  } else if (diff.lt(0)) {
+    arrow = (
+      <TrendingDown className={'text-[color:var(--error)] w-3 h-4 rotate-[10deg]'} />
+    )
+  } else {
+    arrow = (
+      <Minus className={'text-[color:var(--secondary-foreground)] w-3 h-4'} />
+    )
+  }
 
   return (
-    <div className={'flex flex-row gap-2.5 items-center'}>
-      <p className={'text-xs'}>
-        {formatUpokt({
-          amount: current,
-          includeSymbol: false
-        })}
-      </p>
-
-      <div
-        className={
-          clsx(
-            'h-4 min-w-10',
-            diff.gt(0) && 'bg-[color:var(--success)]',
-            diff.lt(0) && 'bg-[color:var(--error)]',
-            diff.eq(0) && 'bg-[color:var(--secondary-foreground)]'
-          )
-        }
-      >
-        {changePercentage.toFixed(1)}%
-      </div>
-
+    <div className={'flex flex-col gap-1'}>
       <p
-        className={'font-light text-xs text-[color:var(--secondary-foreground)]'}
+        className={'text-[13px] text-[color:var(--secondary-foreground)]'}
       >
         {label}
       </p>
+
+      <p className={'text-[13px] font-medium'}>
+        {formatUpokt({
+          amount: current,
+          includeSymbol: false,
+          maxDecimals: 2
+        })}
+      </p>
+
+      <div className={'flex flex-row items-center gap-1.5'}>
+        <div
+          className={
+            clsx(
+              'h-6 min-w-10 py-1 px-2 flex flex-row items-center justify-center rounded-full gap-1',
+              diff.gt(0) && 'bg-[color:var(--success-background)]',
+              diff.lt(0) && 'bg-[color:var(--error-background)]',
+              diff.eq(0) && 'bg-gray-500/20'
+            )
+          }
+        >
+          <p
+            className={
+              clsx(
+                'text-xs font-semibold',
+                diff.gt(0) && 'text-[color:var(--success)]',
+                diff.lt(0) && 'text-[color:var(--error)]',
+                diff.eq(0) && 'text-[color:var(--secondary-foreground)]'
+              )
+            }
+          >
+            {Number(changePercentage.abs().toFixed(1))}%
+          </p>
+          {arrow}
+        </div>
+      </div>
+
+
     </div>
   )
 }
@@ -94,23 +127,32 @@ export default function ClientSupplyMintBurn({
 
     if (diff.gt(0)) {
       symbol = (
-        <p className={'text-[color:var(--success)] text-2xl leading-[24px] -mr-2'}>
+        <p className={'text-[color:var(--success)] font-bold text-2xl leading-[24px] -mr-2'}>
           +
         </p>
       )
     } else if (diff.lt(0)) {
       symbol = (
-        <p className={'text-[color:var(--error)] text-2xl leading-[24px]'}>
+        <p className={'text-[color:var(--error)] font-bold text-2xl leading-[24px]'}>
           -
         </p>
       )
     }
 
     return (
-      <div className={'mt-4'}>
-        <div className={'flex flex-row gap-2.5 items-center h-10 pl-5'}>
+      <div className={'-mt-[5px] xl:mt-3'}>
+        <div className={'flex flex-row gap-2 items-center h-8 mb-1 pl-2 pb-2'}>
           {symbol}
-          <p className={'text-2xl leading-[24px]'}>
+          <p
+            className={
+              clsx(
+                'text-2xl leading-[24px] font-bold',
+                diff.gt(0) && 'text-[color:var(--success)]',
+                diff.lt(0) && 'text-[color:var(--error)]',
+                diff.eq(0) && 'text-[color:var(--secondary-foreground)]'
+              )
+            }
+          >
             {formatUpokt({
               amount: diff.abs(),
               abbreviateThreshold: Number.MAX_SAFE_INTEGER,
@@ -118,14 +160,25 @@ export default function ClientSupplyMintBurn({
               maxDecimals: 2
             })}
           </p>
-          <p className={'text-2xl leading-[24px] font-light text-[color:var(--secondary-foreground)]'}>
+          <p className={'text-xl leading-[24px] font-light text-[color:var(--secondary-foreground)]'}>
             $POKT
           </p>
         </div>
-        <div className={'border mt-6 border-[color:var(--border)] px-5 flex flex-row items-center justify-between gap-2.5 h-[50px]'}>
+        <div className={'-mt-[5px] flex-wrap xl:mt-4 flex flex-row items-center justify-between gap-2.5'}>
           <Change
-            previous={data?.previousBurn?.total_burn || 0}
-            current={data?.previousBurn?.total_burn || 0}
+            previous={data?.previousBurn?.burn_mint || 0}
+            current={data?.currentBurn?.burn_mint || 0}
+            label={'Burn'}
+          />
+          <Change
+            previous={data?.previousMint?.mint_burn || 0}
+            current={data?.currentMint?.mint_burn || 0}
+            label={'Mint'}
+          />
+          <Change
+            previous={data?.previousMint?.inflation || 0}
+            current={data?.currentMint?.inflation || 0}
+            label={'Inflation'}
           />
         </div>
       </div>

@@ -5,6 +5,7 @@ import { timeKey } from '@/constants'
 import MonetaryBase from '@/MonetaryBase'
 import CurrentSupply from '@/Supply/Current'
 import ChangesSupplyMintBurn from '@/Supply/Changes'
+import Projections from '@/Projection'
 
 interface HomeProps {
   selectedTime: Times
@@ -12,12 +13,15 @@ interface HomeProps {
 
 function Home({selectedTime}: HomeProps) {
   return (
-    <div className={'flex flex-row gap-4'}>
-      <MonetaryBase selectedTime={selectedTime} />
-      <div className={'flex flex-col gap-4 w-full'}>
-        <ChangesSupplyMintBurn selectedTime={selectedTime} />
-        <CurrentSupply selectedTime={selectedTime} />
+    <div className={'flex flex-col gap-4 w-full'}>
+      <div className={'flex flex-col xl:flex-row gap-4 w-full'}>
+        <MonetaryBase selectedTime={selectedTime} />
+        <div className={'flex flex-col min-[900px]:flex-row xl:flex-col gap-4 w-full xl:w-1/3'}>
+          <ChangesSupplyMintBurn selectedTime={selectedTime} />
+          <CurrentSupply selectedTime={selectedTime} />
+        </div>
       </div>
+      <Projections timeSelected={selectedTime} />
     </div>
   )
 }
@@ -43,8 +47,8 @@ export default async function Page({searchParams}: {searchParams: Promise<Record
   return (
     <>
       <AppBar selectedTime={selectedTime} />
-      <div className={'w-full h-full flex items-center justify-center overflow-x-hidden'}>
-        <div className={'px-5 max-w-[1400px] w-full'} id={'content-container'}>
+      <div className={'px-2 md:px-5 w-full h-full flex items-center justify-center overflow-x-hidden'}>
+        <div className={'max-w-[1400px] w-full'} id={'content-container'}>
           <Home selectedTime={selectedTime} />
         </div>
       </div>
