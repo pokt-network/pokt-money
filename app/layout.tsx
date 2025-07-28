@@ -10,10 +10,12 @@ import { ApolloWrapper } from '@/config/apollo/client'
 import HeightContextProvider from '@/context/height'
 import AppBar from '@/AppBar/AppBar'
 import { Times } from '@/utils/dates'
+import RegisterPlugins from '@/components/RegisterPlugins'
+import Footer from '@/Footer'
 
 const inter = Inter({
   variable: '--font-inter',
-  weight: ['400', '500', '700'],
+  weight: ['300', '400', '500', '700'],
   style: ['normal', 'italic'],
   subsets: ['latin'],
   display: 'swap',
@@ -21,7 +23,7 @@ const inter = Inter({
 
 const manrope = Manrope({
   variable: '--font-manrope',
-  weight: ['400', '500', '700'],
+  weight: ['300', '400', '500', '700'],
   style: ['normal',],
   subsets: ['latin'],
   display: 'swap',
@@ -68,7 +70,9 @@ export default async function RootLayout({
               // the timestamp is in UTC, so we need to add the Z to the end because the api doesn't include it
               firstTime={latestBlock?.timestamp ? latestBlock.timestamp + 'Z' : ''}
             >
+              <RegisterPlugins />
               {children}
+              <Footer />
             </HeightContextProvider>
           </ApolloWrapper>
         </ReactQueryProvider>

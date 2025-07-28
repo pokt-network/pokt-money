@@ -16,13 +16,13 @@ interface TimeSelectorProps {
 
 export default function TimeSelector({selectedTime}: TimeSelectorProps) {
   return (
-    <div className={'flex flex-row items-center gap-2.5'}>
+    <div className={'flex flex-row items-center gap-2.5 w-full md:w-[270px]'}>
       <label className={'text-xs tracking-[1px]'}>
         Time
       </label>
 
       <div
-        className={'border border-[color:var(--border)] rounded-2xl flex flex-row items-center p-[5px] gap-[5px]'}
+        className={'w-full md:w-[227px] border border-[color:var(--border)] rounded-2xl flex flex-row items-center p-[5px] gap-[5px]'}
       >
         {Object.values(Times).map((time) => (
           <Link
@@ -31,7 +31,7 @@ export default function TimeSelector({selectedTime}: TimeSelectorProps) {
             prefetch={false}
             className={
               clsx(
-                'text-xs w-[50px] h-[20px] text-center leading-[20px] tracking-[1px] font-medium',
+                'text-xs w-full md:w-[50px] h-[20px] text-center leading-[20px] tracking-[1px] font-medium',
                 time !== selectedTime && 'text-[color:var(--secondary-v2-foreground)]',
                 time === selectedTime && 'bg-white rounded-2xl text-[color:var(--main-background)]'
               )
