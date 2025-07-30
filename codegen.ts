@@ -13,6 +13,11 @@ const config: CodegenConfig = {
   generates: {
     './app/config/gql/': {
       preset: 'client',
+      config: {
+        namingConvention: {
+          enumValues: 'keep'
+        }
+      }
     },
     './schema.graphql': {
       plugins: ['schema-ast'],

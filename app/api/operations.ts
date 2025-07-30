@@ -1,4 +1,6 @@
+import type { ExtractVariables } from '@/hooks/useFetchOnBlock'
 import { graphql } from '@/config/gql'
+import { getStartAndEndDateBasedOnTime } from '@/utils/dates'
 
 export const latestBlockQuery = graphql(`
   query latestBlock {
@@ -94,3 +96,19 @@ export const indexerMetadataDocument = graphql(`
     }
   }
 `)
+
+export const supplyCompositionDocument = graphql(`
+  query supplyComposition($startDate: Datetime!, $endDate: Datetime!, $truncInterval: String!) {
+    supplyComposition: getSupplyCompositionBetweenDates(startDate: $startDate, endDate: $endDate, truncInterval: $truncInterval)
+  }
+`)
+
+export function getSupplyCompositionVariables(dateStr: string, timeSelected: string): ExtractVariables<typeof supplyCompositionDocument> {
+  const {start, end, truncInterval} = getStartAndEndDateBasedOnTime(dateStr, timeSelected, true)
+
+  return {
+    startDate: start.toISOString(),
+    endDate: end.toISOString(),
+    truncInterval,
+  }
+}

@@ -14,11 +14,14 @@ export type DeepRequired<T> = NonNullable<{
     : NonNullable<T[K]>;
 }>;
 
+// eslint-disable-next-line
 export type DocumentNodeData<T extends TypedDocumentNode<any, any>> = T extends TypedDocumentNode<infer Data, any> ? Data : never;
 
+// eslint-disable-next-line
 export type ExtractVariables<T> = T extends TypedDocumentNode<any, infer Variables> ? Variables : never;
 
 export interface FetchOnBlockOptions<
+  // eslint-disable-next-line
   T extends TypedDocumentNode<any, any>,
   R = DocumentNodeData<T>
 > {
@@ -35,6 +38,7 @@ export interface FetchOnBlockOptions<
 }
 
 export default function useFetchOnBlock<
+  // eslint-disable-next-line
   T extends TypedDocumentNode<any, any>,
   R = DocumentNodeData<T>
 >({
@@ -71,6 +75,7 @@ export default function useFetchOnBlock<
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchDataFunction = useCallback(() => {
+    // eslint-disable-next-line
     // @ts-ignore
     const variablesToUse = typeof variables === 'function' ? variables(currentHeight, currentTime) : variables
 
@@ -142,6 +147,13 @@ export default function useFetchOnBlock<
     }
     // eslint-disable-next-line
   }, [currentHeight, query, variables])
+
+  useEffect(() => {
+    if (!initialResult && !initialError) {
+      fetchDataFunction()
+    }
+    // eslint-disable-next-line
+  }, [])
 
   const data = parsedData || lastValueRef.current
 

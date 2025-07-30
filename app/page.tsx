@@ -6,6 +6,8 @@ import MonetaryBase from '@/MonetaryBase'
 import CurrentSupply from '@/Supply/Current'
 import ChangesSupplyMintBurn from '@/Supply/Changes'
 import Projections from '@/Projection'
+import SupplyComposition from '@/SupplyComposition'
+import SupplyCompositionProvider from './context/supplyComposition'
 
 interface HomeProps {
   selectedTime: Times
@@ -13,16 +15,24 @@ interface HomeProps {
 
 function Home({selectedTime}: HomeProps) {
   return (
-    <div className={'flex flex-col gap-4 w-full'}>
-      <div className={'flex flex-col xl:flex-row gap-4 w-full'}>
-        <MonetaryBase selectedTime={selectedTime} />
-        <div className={'flex flex-col min-[900px]:flex-row xl:flex-col gap-4 w-full xl:w-1/3'}>
-          <ChangesSupplyMintBurn selectedTime={selectedTime} />
-          <CurrentSupply selectedTime={selectedTime} />
+    <SupplyCompositionProvider
+      selectedTime={selectedTime}
+      initialData={null}
+      initialError={false}
+      initialVariables={null}
+    >
+      <div className={'flex flex-col gap-4 w-full'}>
+        <div className={'flex flex-col xl:flex-row gap-4 w-full'}>
+          <MonetaryBase />
+          <div className={'flex flex-col min-[900px]:flex-row xl:flex-col gap-4 w-full xl:w-1/3'}>
+            <ChangesSupplyMintBurn selectedTime={selectedTime} />
+            <CurrentSupply selectedTime={selectedTime} />
+          </div>
         </div>
+        <Projections timeSelected={selectedTime} />
+        <SupplyComposition />
       </div>
-      <Projections timeSelected={selectedTime} />
-    </div>
+    </SupplyCompositionProvider>
   )
 }
 

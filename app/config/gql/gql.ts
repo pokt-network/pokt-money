@@ -14,7 +14,6 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n  query monetaryBase($startDate: Datetime!, $endDate: Datetime!, $truncInterval: String!) {\n    monetaryBase: getMonetaryBaseByDate(startDate: $startDate, endDate: $endDate, truncInterval: $truncInterval)\n  }\n": typeof types.MonetaryBaseDocument,
     "\n  query currentSupplyMintBurn($startDate: Datetime!, $endDate: Datetime!) {\n    supply: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n    mint: getMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n    burn: getBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": typeof types.CurrentSupplyMintBurnDocument,
     "\n  query currentSupply($startDate: Datetime!, $endDate: Datetime!) {\n    currentSupply: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": typeof types.CurrentSupplyDocument,
     "\n  query supplyMintBurnAndChanges($startDate: Datetime!, $middleDate: Datetime!, $endDate: Datetime!) {\n    currentSupply: getTotalSupplyBetweenDates(startDate: $middleDate, endDate: $endDate)\n    previousSupply: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $middleDate)\n    \n    currentMint: getMintBreakdownBetweenDates(startDate: $middleDate, endDate: $endDate)\n    previousMint: getMintBreakdownBetweenDates(startDate: $startDate, endDate: $middleDate)\n    \n    currentBurn: getBurnBreakdownBetweenDates(startDate: $middleDate, endDate: $endDate)\n    previousBurn: getBurnBreakdownBetweenDates(startDate: $startDate, endDate: $middleDate)\n  }\n": typeof types.SupplyMintBurnAndChangesDocument,
@@ -22,9 +21,9 @@ type Documents = {
     "\n  subscription blocks {\n    blocks {\n      id\n      mutation_type\n      _entity {\n        id\n        height: id\n        timestamp\n      }\n    }\n  }\n": typeof types.BlocksDocument,
     "\n  query numBlocksPerSession {\n    params(\n      filter:  {\n        key:  {\n          equalTo: \"num_blocks_per_session\"\n        }\n        namespace:  {\n          equalTo: \"shared\"\n        }\n      }\n      orderBy: [BLOCK_ID_DESC]\n      first: 1\n    ) {\n      nodes {\n        blockId\n        key\n        namespace\n        value\n      }\n    }\n  }\n": typeof types.NumBlocksPerSessionDocument,
     "\n  query metadata {\n    _metadata {\n      targetHeight\n      lastFinalizedVerifiedHeight\n      lastProcessedHeight\n      lastProcessedTimestamp\n      indexerHealthy\n    }\n  }\n": typeof types.MetadataDocument,
+    "\n  query supplyComposition($startDate: Datetime!, $endDate: Datetime!, $truncInterval: String!) {\n    supplyComposition: getSupplyCompositionBetweenDates(startDate: $startDate, endDate: $endDate, truncInterval: $truncInterval)\n  }\n": typeof types.SupplyCompositionDocument,
 };
 const documents: Documents = {
-    "\n  query monetaryBase($startDate: Datetime!, $endDate: Datetime!, $truncInterval: String!) {\n    monetaryBase: getMonetaryBaseByDate(startDate: $startDate, endDate: $endDate, truncInterval: $truncInterval)\n  }\n": types.MonetaryBaseDocument,
     "\n  query currentSupplyMintBurn($startDate: Datetime!, $endDate: Datetime!) {\n    supply: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n    mint: getMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n    burn: getBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": types.CurrentSupplyMintBurnDocument,
     "\n  query currentSupply($startDate: Datetime!, $endDate: Datetime!) {\n    currentSupply: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": types.CurrentSupplyDocument,
     "\n  query supplyMintBurnAndChanges($startDate: Datetime!, $middleDate: Datetime!, $endDate: Datetime!) {\n    currentSupply: getTotalSupplyBetweenDates(startDate: $middleDate, endDate: $endDate)\n    previousSupply: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $middleDate)\n    \n    currentMint: getMintBreakdownBetweenDates(startDate: $middleDate, endDate: $endDate)\n    previousMint: getMintBreakdownBetweenDates(startDate: $startDate, endDate: $middleDate)\n    \n    currentBurn: getBurnBreakdownBetweenDates(startDate: $middleDate, endDate: $endDate)\n    previousBurn: getBurnBreakdownBetweenDates(startDate: $startDate, endDate: $middleDate)\n  }\n": types.SupplyMintBurnAndChangesDocument,
@@ -32,6 +31,7 @@ const documents: Documents = {
     "\n  subscription blocks {\n    blocks {\n      id\n      mutation_type\n      _entity {\n        id\n        height: id\n        timestamp\n      }\n    }\n  }\n": types.BlocksDocument,
     "\n  query numBlocksPerSession {\n    params(\n      filter:  {\n        key:  {\n          equalTo: \"num_blocks_per_session\"\n        }\n        namespace:  {\n          equalTo: \"shared\"\n        }\n      }\n      orderBy: [BLOCK_ID_DESC]\n      first: 1\n    ) {\n      nodes {\n        blockId\n        key\n        namespace\n        value\n      }\n    }\n  }\n": types.NumBlocksPerSessionDocument,
     "\n  query metadata {\n    _metadata {\n      targetHeight\n      lastFinalizedVerifiedHeight\n      lastProcessedHeight\n      lastProcessedTimestamp\n      indexerHealthy\n    }\n  }\n": types.MetadataDocument,
+    "\n  query supplyComposition($startDate: Datetime!, $endDate: Datetime!, $truncInterval: String!) {\n    supplyComposition: getSupplyCompositionBetweenDates(startDate: $startDate, endDate: $endDate, truncInterval: $truncInterval)\n  }\n": types.SupplyCompositionDocument,
 };
 
 /**
@@ -48,10 +48,6 @@ const documents: Documents = {
  */
 export function graphql(source: string): unknown;
 
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query monetaryBase($startDate: Datetime!, $endDate: Datetime!, $truncInterval: String!) {\n    monetaryBase: getMonetaryBaseByDate(startDate: $startDate, endDate: $endDate, truncInterval: $truncInterval)\n  }\n"): (typeof documents)["\n  query monetaryBase($startDate: Datetime!, $endDate: Datetime!, $truncInterval: String!) {\n    monetaryBase: getMonetaryBaseByDate(startDate: $startDate, endDate: $endDate, truncInterval: $truncInterval)\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -80,6 +76,10 @@ export function graphql(source: "\n  query numBlocksPerSession {\n    params(\n 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query metadata {\n    _metadata {\n      targetHeight\n      lastFinalizedVerifiedHeight\n      lastProcessedHeight\n      lastProcessedTimestamp\n      indexerHealthy\n    }\n  }\n"): (typeof documents)["\n  query metadata {\n    _metadata {\n      targetHeight\n      lastFinalizedVerifiedHeight\n      lastProcessedHeight\n      lastProcessedTimestamp\n      indexerHealthy\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query supplyComposition($startDate: Datetime!, $endDate: Datetime!, $truncInterval: String!) {\n    supplyComposition: getSupplyCompositionBetweenDates(startDate: $startDate, endDate: $endDate, truncInterval: $truncInterval)\n  }\n"): (typeof documents)["\n  query supplyComposition($startDate: Datetime!, $endDate: Datetime!, $truncInterval: String!) {\n    supplyComposition: getSupplyCompositionBetweenDates(startDate: $startDate, endDate: $endDate, truncInterval: $truncInterval)\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

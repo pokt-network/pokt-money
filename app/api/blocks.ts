@@ -11,7 +11,7 @@ export const getLatestBlock = cache(
         query: latestBlockQuery
       })
 
-      return data.blocks.nodes.at(0)
+      return data!.blocks!.nodes!.at(0)! as unknown as Block
     },
     ['latest_block'],
     { revalidate: 30}

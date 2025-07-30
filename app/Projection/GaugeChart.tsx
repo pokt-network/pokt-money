@@ -1,4 +1,4 @@
-import type { Plugin } from 'chart.js'
+import type { Plugin, ScriptableContext } from 'chart.js'
 import useMediaQuery from '@/hooks/useMediaQuery'
 import { Chart } from 'react-chartjs-2'
 
@@ -98,7 +98,7 @@ export default function GaugeChart({
     datasets: [
       {
         data,
-        backgroundColor: (ctx: any) => {
+        backgroundColor: (ctx: ScriptableContext<'doughnut'>) => {
           if (ctx.dataIndex === indexNeedle) {
             const width = ctx.chart.width
             const { x0 = 0, x1 = width, y0 = 0, y1 = 0, colors } = gradient

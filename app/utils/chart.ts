@@ -61,7 +61,7 @@ export const getChartLoaderConfig = (props: ChartLoaderConfigProps) => {
   } = props
   const data = []
   const iterate = invertLoop ? length : 0
-  const condition = (i) => (invertLoop ? i > 0 : i < length)
+  const condition = (i: number) => (invertLoop ? i > 0 : i < length)
   for (let i = iterate; condition(i); invertLoop ? i-- : i++) {
     const dateLabel = formatDate((unit === 'day' ? addDaysToUtc : addHoursToUtc)(new Date(), -i + 1).toISOString(), unit, includeMonthToDate)
     if (chartType === 'matrix') {
@@ -166,7 +166,7 @@ export function fillChartData<T extends LineBarItem>({
 
   return passingResultsToPoints(
     points,
-    data,
+    data as unknown as Array<Point>,
     {
       ...(defaultProps || {}),
     },

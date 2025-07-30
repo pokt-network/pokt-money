@@ -3,13 +3,10 @@ import { Inter, Manrope } from 'next/font/google'
 import "./globals.css";
 import { getLatestBlock, getNumBlocksPerSession } from '@/api/blocks'
 import getPrice from '@/api/price'
-import { headers } from 'next/headers'
 import getMetadata from '@/api/metadata'
 import ReactQueryProvider from '@/context/query'
 import { ApolloWrapper } from '@/config/apollo/client'
 import HeightContextProvider from '@/context/height'
-import AppBar from '@/AppBar/AppBar'
-import { Times } from '@/utils/dates'
 import RegisterPlugins from '@/components/RegisterPlugins'
 import Footer from '@/Footer'
 
@@ -23,7 +20,7 @@ const inter = Inter({
 
 const manrope = Manrope({
   variable: '--font-manrope',
-  weight: ['300', '400', '500', '700'],
+  weight: ['200','300', '400', '500', '700'],
   style: ['normal',],
   subsets: ['latin'],
   display: 'swap',
@@ -53,8 +50,6 @@ export default async function RootLayout({
     getPrice(),
     getMetadata().catch(() => null),
   ])
-
-
 
   return (
     <html lang="en">
