@@ -1,7 +1,7 @@
+import type { DocumentNodeData } from '@/hooks/useFetchOnBlock'
 import { getLatestBlock } from '@/api/blocks'
 import { getClient } from '@/config/apollo/rsc'
 import { currentSupplyDocument, getCurrentSupplyVariables } from '@/Supply/operations'
-import { DocumentNodeData, ExtractVariables } from '@/hooks/useFetchOnBlock'
 import { Times } from '@/utils/dates'
 import { Suspense } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'

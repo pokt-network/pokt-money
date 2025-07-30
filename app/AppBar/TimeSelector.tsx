@@ -4,7 +4,7 @@ import { timeKey } from '@/constants'
 import { Times } from '@/utils/dates'
 
 const labelByTime: Record<Times, string> = {
-  last24h: '1d',
+  last24h: '24h',
   last7d: '7d',
   last30d: '30d',
   last365d: '365d',

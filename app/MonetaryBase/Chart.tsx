@@ -1,89 +1,71 @@
-import useFetchOnBlock, { DocumentNodeData, ExtractVariables } from '@/hooks/useFetchOnBlock'
-import { getMonetaryBaseVariables, monetaryBaseDocument } from '@/MonetaryBase/operations'
-import { normalizeIsoDate, Times } from '@/utils/dates'
-import { useCallback, useMemo, useRef } from 'react'
+import Big from 'big.js'
+import { useMemo } from 'react'
+import { normalizeIsoDate } from '@/utils/dates'
+import RetryError from '@/components/ErrorRetry'
+import { formatUpokt } from '@/utils/formatAmounts'
 import { fillChartData, LineBarItem } from '@/utils/chart'
 import BaseLineBarChart from '@/components/BaseLineBarChart'
-import { formatUpokt } from '@/utils/formatAmounts'
-import RetryError from '@/components/ErrorRetry'
-
-interface MonetaryBaseChartProps {
-  initialData: DocumentNodeData<typeof monetaryBaseDocument> | null
-  initialVariables: ExtractVariables<typeof monetaryBaseDocument>
-  initialError: boolean
-  selectedTime: Times
-}
+import { useSupplyComposition } from '@/context/supplyComposition'
 
 interface RawDataItem {
-  date_truncated: string,
-  lastest_block: number,
-  amount: number
+  date_truncated: string
+  latest_block: number
+  network_supply: number
+  unmigrated_supply: number
+  total_supply: number
+  network_supply_composition: Array<{
+    label: string
+    amount: number
+  }>
 }
 
 interface ProcessedDataItem extends LineBarItem {
   amount: number
 }
 
+export default function MonetaryBaseChart() {
+  const {data, error, refetch, isLoading, lastVariables} = useSupplyComposition()
 
-export default function MonetaryBaseChart({
-  initialVariables,
-  initialError,
-  initialData,
-  selectedTime,
-}: MonetaryBaseChartProps) {
-  const lastVariables = useRef<ExtractVariables<typeof monetaryBaseDocument>>(initialVariables)
+  const dataStr = useMemo(() => {
+    if (!data) return ''
 
-  const variables = useCallback((_: number, timestamp: string) => {
-    return lastVariables.current = getMonetaryBaseVariables(timestamp, selectedTime)
-  }, [])
+    return JSON.stringify(data)
+  }, [data])
 
-  const {data, error, refetch, isLoading} = useFetchOnBlock({
-    query: monetaryBaseDocument,
-    variables,
-    initialResult: initialData,
-    initialError,
-  })
-
-  const processedData: Array<ProcessedDataItem> = useMemo(() => {
-    if (!data?.monetaryBase) return []
-
-    try {
-      const parsedData: Array<RawDataItem> = JSON.parse(data.monetaryBase)
-
-      return fillChartData({
-        data: parsedData.map(
-          (item) => ({
-            amount: item.amount,
-            id: '',
-            point: normalizeIsoDate(item.date_truncated),
-            start_date: normalizeIsoDate(item.date_truncated),
-          })
-        ),
-        startDate: lastVariables?.current?.startDate,
-        endDate: lastVariables?.current?.endDate,
-        unitToFormatDate: lastVariables?.current?.truncInterval === 'hour' ? 'hour' : 'day',
-        defaultProps: {
-          amount: 0,
-        }
-      })
-    } catch {
-      return []
+  const processedData: {data: Array<ProcessedDataItem> } = useMemo(() => {
+    let arr: Array<ProcessedDataItem> = []
+    if (!data?.supplyComposition) {
+      arr = []
+    } else {
+      try {
+        arr = fillChartData({
+          data: data.supplyComposition.map(
+            (item: RawDataItem) => ({
+              amount: new Big(item.total_supply || 0).minus(
+                item.network_supply_composition.find(({label}) => label === 'dao')?.amount || 0
+              ).toNumber(),
+              id: '',
+              point: normalizeIsoDate(item.date_truncated),
+              start_date: normalizeIsoDate(item.date_truncated),
+            } as ProcessedDataItem)
+          ) as Array<ProcessedDataItem>,
+          startDate: lastVariables?.startDate,
+          endDate: lastVariables?.endDate,
+          unitToFormatDate: lastVariables?.truncInterval === 'hour' ? 'hour' : 'day',
+          defaultProps: {
+            amount: 0,
+          }
+        })
+      } catch {
+        arr = []
+      }
     }
-  }, [])
 
-  if (isLoading) {
-    return (
-      <div className={'h-[300px]'}>
-        <BaseLineBarChart
-          data={{}}
-          yAxisKey={'amount'}
-          yAxisLabel={''}
-          lineColor={''}
-          isLoading={true}
-        />
-      </div>
-    )
-  }
+    return {
+      'data': arr
+    }
+    // eslint-disable-next-line
+  }, [dataStr])
 
   if (error) {
     return (
@@ -98,14 +80,12 @@ export default function MonetaryBaseChart({
   return (
     <div className={'h-[300px]'}>
       <BaseLineBarChart
-        data={{
-          '': processedData
-        }}
+        data={processedData}
         yAxisKey={'amount'}
         yAxisLabel={''}
         lineColor={'#00CF9D'}
         chartType={'line'}
-        formatValueAxisY={(value) => formatUpokt({
+        formatValueAxisY={(value) => isLoading ? value.toString() : formatUpokt({
           amount: value,
           includeSymbol: false,
         })}
@@ -116,8 +96,9 @@ export default function MonetaryBaseChart({
           abbreviateThreshold: Number.MAX_SAFE_INTEGER,
           maxDecimals: 2,
         })}
-        unitToFormatDate={lastVariables.current?.truncInterval === 'hour' ? 'hour' : 'day'}
-        beginAtZero={processedData.some((item) => item.amount === 0)}
+        unitToFormatDate={lastVariables?.truncInterval === 'hour' ? 'hour' : 'day'}
+        beginAtZero={processedData.data.some((item) => item.amount === 0)}
+        isLoading={isLoading}
       />
     </div>
   )

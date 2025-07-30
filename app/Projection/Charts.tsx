@@ -93,7 +93,7 @@ export default function ProjectionCharts({
     query: currentSupplyMintBurnDocument,
   })
 
-  const {burn, growth, issuance} = useMemo(() => {
+  const processedData = useMemo(() => {
     const {startDate, endDate} = lastVariables?.current || getCurrentSupplyMintBurnVariables(new Date().toISOString(), timeSelected)
 
     const daysDifference = (new Date(endDate).getTime() - new Date(startDate).getTime()) / (24 * 60 * 60 * 1000)
@@ -117,10 +117,6 @@ export default function ProjectionCharts({
     const growth = new Big(mint).minus(data?.burn?.burn_mint).mul(
       new Big(365).div(daysDifference)
     ).div(data?.supply?.total_supply).mul(100).toNumber()
-
-    const growthNumber = (
-      (((data?.mint?.total_mint - data?.burn?.burn_mint) * (365 / daysDifference)) / data?.supply?.total_supply) * 100
-    )
 
     const growthData = [
       growth < 0 ? (growth > -25 ? 25 + growth : 0) : 25,
@@ -188,17 +184,10 @@ export default function ProjectionCharts({
     }
   }, [data, timeSelected])
 
-  if (isLoading) {
-    return (
-      <ProjectionsLoader />
-    )
-  } else if (error) {
-    return (
-      <div className={'flex grow -mt-10 items-center justify-center col-span-3'}>
-        <RetryError onRetry={refetch} />
-      </div>
-    )
-  } else {
+  // to stop unnecessary rerendering
+  const gaugeCharts = useMemo(() => {
+    const {burn, growth, issuance} = processedData
+
     return (
       <>
         <Item
@@ -224,5 +213,19 @@ export default function ProjectionCharts({
         />
       </>
     )
+  }, [processedData])
+
+  if (isLoading) {
+    return (
+      <ProjectionsLoader />
+    )
+  } else if (error) {
+    return (
+      <div className={'flex grow -mt-10 items-center justify-center col-span-3'}>
+        <RetryError onRetry={refetch} />
+      </div>
+    )
+  } else {
+    return gaugeCharts
   }
 }
