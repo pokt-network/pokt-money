@@ -1,7 +1,9 @@
+'use client'
 import Link from 'next/link'
 import clsx from 'clsx'
 import { timeKey } from '@/constants'
 import { Times } from '@/utils/dates'
+import { setCookie } from '@/utils/cookies'
 
 const labelByTime: Record<Times, string> = {
   last24h: '24h',
@@ -36,6 +38,9 @@ export default function TimeSelector({selectedTime}: TimeSelectorProps) {
                 time === selectedTime && 'bg-white rounded-2xl text-[color:var(--main-background)]'
               )
             }
+            onClick={() => {
+              setCookie(timeKey, time)
+            }}
           >
             {labelByTime[time] || time}
           </Link>

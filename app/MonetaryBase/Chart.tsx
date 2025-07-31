@@ -6,6 +6,31 @@ import { formatUpokt } from '@/utils/formatAmounts'
 import { fillChartData, LineBarItem } from '@/utils/chart'
 import BaseLineBarChart from '@/components/BaseLineBarChart'
 import { useSupplyComposition } from '@/context/supplyComposition'
+import LegendItem from '@/components/LegendItem'
+
+const colorsByLabel: Record<string, {line: string, bg: string, border: string}> = {
+  'totalSupply': {
+    line: '#B7ABFF',
+    bg: 'rgba(183, 171, 255, 0.1)',
+    border: '#615A83'
+  },
+  'monetaryBase': {
+    line: '#00CF9D',
+    bg: 'rgba(0, 207, 157, 0.1)',
+    border: '#087059'
+  },
+}
+
+const legendsItems = [
+  {
+    label: 'Total Supply',
+    boxColor: colorsByLabel.totalSupply.line,
+  },
+  {
+    label: 'Monetary Base',
+    boxColor: colorsByLabel.monetaryBase.line,
+  },
+]
 
 interface RawDataItem {
   date_truncated: string
@@ -19,9 +44,24 @@ interface RawDataItem {
   }>
 }
 
-interface ProcessedDataItem extends LineBarItem {
+interface ProcessedDataItem<T extends string> extends LineBarItem {
+  id: T
   amount: number
+  start_date: string
+  point: string
 }
+
+function getItem<T extends string>(id: T, amount: number, date: string): ProcessedDataItem<T> {
+  const normalizedDate = normalizeIsoDate(date)
+
+  return {
+    id,
+    amount: amount || 0,
+    start_date: normalizedDate,
+    point: normalizedDate,
+  }
+}
+
 
 export default function MonetaryBaseChart() {
   const {data, error, refetch, isLoading, lastVariables} = useSupplyComposition()
@@ -32,42 +72,118 @@ export default function MonetaryBaseChart() {
     return JSON.stringify(data)
   }, [data])
 
-  const processedData: {data: Array<ProcessedDataItem> } = useMemo(() => {
-    let arr: Array<ProcessedDataItem> = []
-    if (!data?.supplyComposition) {
-      arr = []
-    } else {
-      try {
-        arr = fillChartData({
-          data: data.supplyComposition.map(
-            (item: RawDataItem) => ({
-              amount: new Big(item.total_supply || 0).minus(
-                item.network_supply_composition.find(({label}) => label === 'dao')?.amount || 0
-              ).toNumber(),
-              id: '',
-              point: normalizeIsoDate(item.date_truncated),
-              start_date: normalizeIsoDate(item.date_truncated),
-            } as ProcessedDataItem)
-          ) as Array<ProcessedDataItem>,
-          startDate: lastVariables?.startDate,
-          endDate: lastVariables?.endDate,
-          unitToFormatDate: lastVariables?.truncInterval === 'hour' ? 'hour' : 'day',
-          defaultProps: {
-            amount: 0,
-          }
-        })
-      } catch {
-        arr = []
+  const processedData: Record<string, Array<ProcessedDataItem<string>>> = useMemo(() => {
+    const monetaryBase: Array<ProcessedDataItem<'monetaryBase'>> = [],
+      totalSupply: Array<ProcessedDataItem<'totalSupply'>> = []
+
+    if (isLoading || !data) {
+      return {
+        monetaryBase,
+        totalSupply
       }
     }
 
+    if (data?.supplyComposition?.length) {
+      for (let i = 0; i < data.supplyComposition.length; i++) {
+        const item: RawDataItem = data.supplyComposition[i]
+
+        const supply = new Big(item.total_supply || 0)
+        const dao = item.network_supply_composition.find(({label}) => label === 'dao')?.amount || 0
+
+        const monetaryBaseValue = supply.minus(dao).toNumber()
+        const totalSupplyValue = supply.toNumber()
+
+        monetaryBase.push(getItem('monetaryBase', monetaryBaseValue, item.date_truncated))
+        totalSupply.push(getItem('totalSupply', totalSupplyValue, item.date_truncated))
+      }
+    }
+
+    function fillData<T extends string>(id: T, arr: Array<ProcessedDataItem<T>>) {
+      return fillChartData({
+        data: arr,
+        startDate: lastVariables?.startDate,
+        endDate: lastVariables?.endDate,
+        unitToFormatDate: lastVariables?.truncInterval === 'hour' ? 'hour' : 'day',
+        defaultProps: {
+          id,
+          amount: 0,
+        }
+      })
+    }
+
+
     return {
-      'data': arr
+      monetaryBase: fillData('monetaryBase', monetaryBase),
+      totalSupply: fillData('totalSupply', totalSupply),
     }
     // eslint-disable-next-line
   }, [dataStr])
 
-  if (error) {
+  const chart = useMemo(() => {
+    return (
+      <BaseLineBarChart
+        data={processedData}
+        yAxisKey={'amount'}
+        yAxisLabel={'POKTs'}
+        lineColor={''}
+        chartType={'line'}
+        formatValueAxisY={(value) => isLoading ? value.toString() : formatUpokt({
+          amount: value,
+          includeSymbol: false,
+        })}
+        displayColorsInTooltip={true}
+        getTooltipLabel={(item) => formatUpokt({
+          amount: item.amount,
+          includeSymbol: false,
+          abbreviateThreshold: Number.MAX_SAFE_INTEGER,
+          maxDecimals: 2,
+        })}
+        unitToFormatDate={lastVariables?.truncInterval === 'hour' ? 'hour' : 'day'}
+        isLoading={isLoading}
+        getCustomDatasetProps={(id) => {
+          const {bg, line, border} = colorsByLabel[id] || {}
+          return {
+            stack: 1,
+            fill: true,
+            borderColor: line,
+            backgroundColor: bg,
+            tension: 0,
+            borderWidth: 1.5,
+            pointRadius: 0,
+            pointHoverRadius: 4.5,
+            pointHoverBorderWidth: 1,
+            pointBackgroundColor: line,
+            pointBorderColor: border,
+          }
+        }}
+        customOptions={{
+          interaction: {
+            mode: 'index',
+            axis: 'x',
+          },
+          scales: {
+            y: {
+              stacked: true,
+              grace: '10%',
+            }
+          },
+          plugins: {
+            tooltip: {
+              titleMarginBottom: 10,
+              itemSort: (a, b) => {
+                return (b.raw as ProcessedDataItem<string>).amount - (a.raw as ProcessedDataItem<string>).amount
+              },
+            }
+          }
+        }}
+        beginAtZero={true}
+        gradientColors={[]}
+      />
+    )
+    // eslint-disable-next-line
+  }, [processedData, isLoading])
+
+  if (error && !isLoading) {
     return (
       <div className={'flex grow items-center justify-center pb-12'}>
         <RetryError
@@ -78,29 +194,22 @@ export default function MonetaryBaseChart() {
   }
 
   return (
-    <div className={'h-[300px]'}>
-      <BaseLineBarChart
-        data={processedData}
-        yAxisKey={'amount'}
-        yAxisLabel={''}
-        lineColor={'#00CF9D'}
-        chartType={'line'}
-        formatValueAxisY={(value) => isLoading ? value.toString() : formatUpokt({
-          amount: value,
-          includeSymbol: false,
+    <>
+      <div className={'flex flex-row flex-wrap gap-x-8 gap-y-2 pt-0 pb-4'}>
+        {legendsItems.map((item, index) => {
+          return (
+            <LegendItem
+              key={item.label}
+              label={item.label}
+              boxColor={item.boxColor}
+              loading={isLoading || (!data && !error)}
+            />
+          )
         })}
-        displayColorsInTooltip={false}
-        getTooltipLabel={(item) => formatUpokt({
-          amount: item.amount,
-          includeSymbol: false,
-          abbreviateThreshold: Number.MAX_SAFE_INTEGER,
-          maxDecimals: 2,
-        })}
-        unitToFormatDate={lastVariables?.truncInterval === 'hour' ? 'hour' : 'day'}
-        beginAtZero={processedData.data.some((item) => item.amount === 0)}
-        isLoading={isLoading}
-      />
-    </div>
+      </div>
+      <div className={'h-[270px]'}>
+        {chart}
+      </div>
+    </>
   )
-
 }

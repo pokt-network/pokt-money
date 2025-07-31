@@ -6,9 +6,9 @@ import { formatSimpleAmount, formatUpokt } from '@/utils/formatAmounts'
 import { useSupplyComposition } from '@/context/supplyComposition'
 import BaseLineBarChart from '@/components/BaseLineBarChart'
 import { fillChartData, LineBarItem } from '@/utils/chart'
-import { Skeleton } from '@/components/ui/skeleton'
 import RetryError from '@/components/ErrorRetry'
 import { normalizeIsoDate } from '@/utils/dates'
+import LegendItem from '@/components/LegendItem'
 
 const colorsByLabel: Record<string, {line: string, bg: string, border: string}> = {
   'suppliers': {
@@ -87,38 +87,6 @@ const legendsItems = [
     boxColor: colorsByLabel.gateways.line,
   },
 ]
-
-interface LegendItemProps {
-  label: string
-  boxColor: string
-  onClick: () => void
-  loading: boolean
-}
-
-function LegendItem({label, boxColor, onClick, loading}: LegendItemProps) {
-  if (loading) {
-    return(
-      <Skeleton className={'h-5 w-20'} />
-    )
-  }
-
-  return (
-    <div
-      className={'flex items-center cursor-pointer gap-2'}
-      onClick={onClick}
-    >
-      <div
-        className={'w-3 h-3 rounded-[1px]'}
-        style={{backgroundColor: boxColor}}
-      />
-      <p
-        className={'text-[color:var(--secondary-v2-foreground)] font-medium whitespace-nowrap text-right select-none text-[11px] lg:text-xs'}
-      >
-        {label}
-      </p>
-    </div>
-  )
-}
 
 interface Item<T extends string> extends LineBarItem {
   id: T
@@ -338,7 +306,10 @@ export default function SupplyCompositionChart() {
           },
           plugins: {
             tooltip: {
-              titleMarginBottom: 10
+              titleMarginBottom: 10,
+              itemSort: (a, b) => {
+                return (b.raw as Item<string>).amount - (a.raw as Item<string>).amount
+              },
             }
           }
         }}
@@ -349,7 +320,7 @@ export default function SupplyCompositionChart() {
     // eslint-disable-next-line
   }, [processedData, isLoading])
 
-  if (error) {
+  if (error && !isLoading) {
     return (
       <div className={'flex grow items-center justify-center pb-12'}>
         <RetryError
