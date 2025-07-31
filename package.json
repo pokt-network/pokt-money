@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "docker:build": "docker build -t registry.digitalocean.com/poktscan/pokt-money:latest ."
+    "docker:build": "docker build -t registry.digitalocean.com/poktscan/pokt-money:shannon ."
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",
