@@ -112,3 +112,57 @@ export function getSupplyCompositionVariables(dateStr: string, timeSelected: str
     truncInterval,
   }
 }
+
+
+export const totalSupplyDocument = graphql(`
+  query totalSupply {
+    blocks(orderBy: ID_DESC, first: 1) {
+      nodes {
+        id
+        supplies(filter: {supply: {denom: {equalTo: "upokt"}}}) {
+          nodes {
+            supply {
+              amount
+            }
+          }
+        }
+      }
+    }
+    morseClaimableAccounts(filter: {claimed: {equalTo: false}}) {
+      aggregates {
+        sum {
+          supplierStakeAmount
+          applicationStakeAmount
+          unstakedBalanceAmount
+        }
+      }
+    }
+  }
+`)
+
+export const circulatingSupplyDocument = graphql(`
+  query circulatingSupply {
+    blocks(orderBy: ID_DESC, first: 1) {
+      nodes {
+        id
+        supplies(filter: {supply: {denom: {equalTo: "upokt"}}}) {
+          nodes {
+            supply {
+              amount
+            }
+          }
+        }
+      }
+    }
+    morseClaimableAccounts(filter: {claimed: {equalTo: false}}) {
+      aggregates {
+        sum {
+          supplierStakeAmount
+          applicationStakeAmount
+          unstakedBalanceAmount
+        }
+      }
+    }
+    dao: getDaoBalanceAtHeight
+  }
+`)
