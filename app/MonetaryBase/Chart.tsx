@@ -27,7 +27,7 @@ const legendsItems = [
     boxColor: colorsByLabel.totalSupply.line,
   },
   {
-    label: 'Monetary Base',
+    label: 'Circulating Supply',
     boxColor: colorsByLabel.monetaryBase.line,
   },
 ]
@@ -46,17 +46,19 @@ interface RawDataItem {
 
 interface ProcessedDataItem<T extends string> extends LineBarItem {
   id: T
-  amount: number
+  chartAmount: number
+  realAmount: number
   start_date: string
   point: string
 }
 
-function getItem<T extends string>(id: T, amount: number, date: string): ProcessedDataItem<T> {
+function getItem<T extends string>(id: T, chartAmount: number, realAmount: number, date: string): ProcessedDataItem<T> {
   const normalizedDate = normalizeIsoDate(date)
 
   return {
     id,
-    amount: amount || 0,
+    chartAmount: chartAmount || 0,
+    realAmount: realAmount || 0,
     start_date: normalizedDate,
     point: normalizedDate,
   }
@@ -93,8 +95,8 @@ export default function MonetaryBaseChart() {
         const monetaryBaseValue = supply.minus(dao).toNumber()
         const totalSupplyValue = supply.toNumber()
 
-        monetaryBase.push(getItem('monetaryBase', monetaryBaseValue, item.date_truncated))
-        totalSupply.push(getItem('totalSupply', totalSupplyValue, item.date_truncated))
+        monetaryBase.push(getItem('monetaryBase', monetaryBaseValue, monetaryBaseValue, item.date_truncated))
+        totalSupply.push(getItem('totalSupply', dao, totalSupplyValue, item.date_truncated))
       }
     }
 
@@ -106,7 +108,8 @@ export default function MonetaryBaseChart() {
         unitToFormatDate: lastVariables?.truncInterval === 'hour' ? 'hour' : 'day',
         defaultProps: {
           id,
-          amount: 0,
+          chartAmount: 0,
+          realAmount: 0,
         }
       })
     }
@@ -123,7 +126,7 @@ export default function MonetaryBaseChart() {
     return (
       <BaseLineBarChart
         data={processedData}
-        yAxisKey={'amount'}
+        yAxisKey={'chartAmount'}
         yAxisLabel={'POKTs'}
         lineColor={''}
         chartType={'line'}
@@ -133,7 +136,7 @@ export default function MonetaryBaseChart() {
         })}
         displayColorsInTooltip={true}
         getTooltipLabel={(item) => formatUpokt({
-          amount: item.amount,
+          amount: item.realAmount,
           includeSymbol: false,
           abbreviateThreshold: Number.MAX_SAFE_INTEGER,
           maxDecimals: 2,
@@ -143,7 +146,7 @@ export default function MonetaryBaseChart() {
         getCustomDatasetProps={(id) => {
           const {bg, line, border} = colorsByLabel[id] || {}
           return {
-            stack: 1,
+            stack: true,
             fill: true,
             borderColor: line,
             backgroundColor: bg,
@@ -171,7 +174,7 @@ export default function MonetaryBaseChart() {
             tooltip: {
               titleMarginBottom: 10,
               itemSort: (a, b) => {
-                return (b.raw as ProcessedDataItem<string>).amount - (a.raw as ProcessedDataItem<string>).amount
+                return (b.raw as ProcessedDataItem<string>).realAmount - (a.raw as ProcessedDataItem<string>).realAmount
               },
             }
           }
@@ -196,7 +199,7 @@ export default function MonetaryBaseChart() {
   return (
     <>
       <div className={'flex flex-row flex-wrap gap-x-8 gap-y-2 pt-0 pb-4'}>
-        {legendsItems.map((item, index) => {
+        {legendsItems.map((item) => {
           return (
             <LegendItem
               key={item.label}

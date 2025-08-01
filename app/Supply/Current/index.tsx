@@ -40,7 +40,7 @@ export default function CurrentSupply({selectedTime}: CurrentSupplyProps) {
   return (
     <div className={'h-[160px] xl:h-[142px] w-full bg-[color:var(--secondary-background)] px-4 rounded-md'}>
       <div className={'h-[50px] flex items-center mb-2.5'}>
-        <h2>Current Supply</h2>
+        <h2>Total Supply</h2>
       </div>
       <Suspense
         key={selectedTime}
