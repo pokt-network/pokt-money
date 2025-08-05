@@ -1,3 +1,5 @@
+'use client'
+
 import Big from 'big.js'
 import { useMemo } from 'react'
 import { normalizeIsoDate } from '@/utils/dates'
@@ -123,6 +125,8 @@ export default function MonetaryBaseChart() {
   }, [dataStr])
 
   const chart = useMemo(() => {
+    const latestSupply = processedData.totalSupply.at(-1)?.realAmount || 0
+
     return (
       <BaseLineBarChart
         data={processedData}
@@ -142,7 +146,7 @@ export default function MonetaryBaseChart() {
           maxDecimals: 2,
         })}
         unitToFormatDate={lastVariables?.truncInterval === 'hour' ? 'hour' : 'day'}
-        isLoading={isLoading}
+        isLoading={isLoading || (!data && !error)}
         getCustomDatasetProps={(id) => {
           const {bg, line, border} = colorsByLabel[id] || {}
           return {
@@ -167,7 +171,10 @@ export default function MonetaryBaseChart() {
           scales: {
             y: {
               stacked: true,
-              grace: '10%',
+              ...(latestSupply && !isLoading && {
+                min: latestSupply * 0.8,
+                max: latestSupply * 1.05,
+              })
             }
           },
           plugins: {

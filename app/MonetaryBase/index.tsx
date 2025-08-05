@@ -1,4 +1,3 @@
-'use client'
 import MonetaryBaseChart from '@/MonetaryBase/Chart'
 
 export default function MonetaryBase() {

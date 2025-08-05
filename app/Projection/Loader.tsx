@@ -26,9 +26,9 @@ function GaugeSkeleton({className}: GaugeSkeletonProps) {
         <div
           className={
             clsx(
-              'h-[220px] xl:h-[250px] items-center',
-              'min-h-[220px] xl:min-h-[250px]',
-              'w-[220px] xl:w-[250px]',
+              'h-[260px] items-center',
+              'min-h-[260px]',
+              'w-[260px]',
             )
           }
         >
@@ -38,8 +38,8 @@ function GaugeSkeleton({className}: GaugeSkeletonProps) {
           className={
             clsx(
               'absolute flex self-center rounded-full top-[30px] bg-[color:var(--secondary-background)]',
-              'h-[170px] xl:h-[190px]',
-              'w-[170px] xl:w-[190px]',
+              'h-[200px]',
+              'w-[200px]',
             )
           }
         />
@@ -71,13 +71,13 @@ function ChartLoaderItem({title, amountHelper, gaugeClassName}: ChartLoaderItemP
       <div
         className={
           clsx(
-            'flex grow items-center mt-[5px] sm:mt-2.5 md:mt-5 relative',
+            'flex grow items-center mt-[5px] md:mt-5 relative',
           )
         }
       >
         <GaugeSkeleton />
       </div>
-      <div className={'flex flex-col z-[3] items-center bg-[color:var(--secondary-background)] h-[100px] pt-5'}>
+      <div className={'flex flex-col w-[300px] md:w-auto z-[3] items-center bg-[color:var(--secondary-background)] h-[120px] -mt-7 pt-5'}>
         <Skeleton className={'w-[120px] h-[30px]'} />
         <p className={'text-[color:var(--secondary-foreground)] text-xs lg:text-sm'}>
           {amountHelper}

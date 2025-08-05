@@ -18,6 +18,7 @@ export const gaugeNeedle: Plugin<'doughnut'> = {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const needleValue = chart.config.data.datasets[0].needleValue
+    // const needleValue = 1e6
     if (needleValue) {
       const {
         needleBorderColor,
@@ -32,7 +33,9 @@ export const gaugeNeedle: Plugin<'doughnut'> = {
         (a: number, b: number) => a + b,
         0
       ) as number
+
       const angle = Math.PI + (1 / dataTotal) * needleValue * Math.PI - needleAngleOffset
+
       const ctx = chart.ctx
       const cw = chart.canvas.offsetWidth
       const ch = chart.canvas.offsetHeight
@@ -91,6 +94,7 @@ export default function GaugeChart({
   gradient,
 }: GaugeChartProps) {
   const isSmOrLess = useMediaQuery('(max-width: 900px)')
+  const isXlOrMore = useMediaQuery('(min-width: 1280px)')
 
   const borderColor = '#101014'
 
@@ -118,8 +122,8 @@ export default function GaugeChart({
         needleValue,
         borderRadius: 1000,
         borderWidth: 6,
-        circumference: 230,
-        rotation: 245,
+        circumference: 190,
+        rotation: 265,
         cutout: '85%',
       },
     ],
@@ -140,11 +144,11 @@ export default function GaugeChart({
       gaugeNeedle: {
         needleBorderColor: '#FFF',
         needleColor: '#7B7B7B',
-        lineToXFactor: isSmOrLess ? 60 : 80,
+        lineToXFactor: isSmOrLess ? 75 : isXlOrMore ? 80 : 90,
         needleMoveToYCoordinate: isSmOrLess ? 3 : 6,
         needleBorderMoveToYCoordinate: isSmOrLess ? 3.3 : 6.3,
-        needleAngleOffset: isSmOrLess ? 0 : 0,
-        needleYOffset: isSmOrLess ? 25 : 30,
+        needleAngleOffset: 0,
+        needleYOffset: isSmOrLess ? 10 : 12,
       },
     },
   }
@@ -176,8 +180,8 @@ export default function GaugeChart({
               borderColor: borderColor,
               borderRadius: 1000,
               borderWidth: 6,
-              circumference: 230,
-              rotation: 245,
+              circumference: 190,
+              rotation: 265,
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
               cutout: '85%',
