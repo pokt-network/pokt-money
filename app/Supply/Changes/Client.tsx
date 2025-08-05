@@ -41,49 +41,49 @@ function Change({previous, current, label}: ChangeProps) {
   }
 
   return (
-    <div className={'flex flex-col gap-1'}>
+    <div className={'flex gap-0.5 flex-col'}>
       <p
         className={'text-[13px] text-[color:var(--secondary-foreground)]'}
       >
         {label}
       </p>
 
-      <p className={'text-[13px] font-medium'}>
-        {formatUpokt({
-          amount: current,
-          includeSymbol: false,
-          maxDecimals: 2
-        })}
-      </p>
+      <div className={'flex flex-row gap-2 items-center'}>
+        <p className={'text-[13px] font-medium'}>
+          {formatUpokt({
+            amount: current,
+            includeSymbol: false,
+            maxDecimals: 2
+          })}
+        </p>
 
-      <div className={'flex flex-row items-center gap-1.5'}>
-        <div
-          className={
-            clsx(
-              'h-6 min-w-10 py-1 px-2 flex flex-row items-center justify-center rounded-full gap-1',
-              diff.gt(0) && 'bg-[color:var(--success-background)]',
-              diff.lt(0) && 'bg-[color:var(--error-background)]',
-              diff.eq(0) && 'bg-gray-500/20'
-            )
-          }
-        >
-          <p
+        <div className={'flex flex-row items-center gap-1.5'}>
+          <div
             className={
               clsx(
-                'text-xs font-semibold',
-                diff.gt(0) && 'text-[color:var(--success)]',
-                diff.lt(0) && 'text-[color:var(--error)]',
-                diff.eq(0) && 'text-[color:var(--secondary-foreground)]'
+                'h-6 min-w-10 py-1 px-2 flex flex-row items-center justify-center rounded-full gap-1',
+                diff.gt(0) && 'bg-[color:var(--success-background)]',
+                diff.lt(0) && 'bg-[color:var(--error-background)]',
+                diff.eq(0) && 'bg-gray-500/20'
               )
             }
           >
-            {Number(changePercentage.abs().toFixed(1))}%
-          </p>
-          {arrow}
+            <p
+              className={
+                clsx(
+                  'text-xs font-semibold',
+                  diff.gt(0) && 'text-[color:var(--success)]',
+                  diff.lt(0) && 'text-[color:var(--error)]',
+                  diff.eq(0) && 'text-[color:var(--secondary-foreground)]'
+                )
+              }
+            >
+              {Number(changePercentage.abs().toFixed(1))}%
+            </p>
+            {arrow}
+          </div>
         </div>
       </div>
-
-
     </div>
   )
 }
@@ -164,26 +164,22 @@ export default function ClientSupplyMintBurn({
             $POKT
           </p>
         </div>
-        <div className={'-mt-[5px] flex-wrap xl:mt-4 flex flex-row items-center justify-between gap-2.5'}>
+
+        <hr className={'h-[1px] bg-[color:var(--border)] mt-3 xl:mt-5 mb-4 xl:mb-6'} />
+
+        <div className={'-mt-[5px] flex-wrap xl:mt-4 flex flex-row items-center justify-between gap-2.5 pl-1 pr-0.5'}>
           <Change
             previous={data?.previousBurn?.burn_mint || 0}
             current={data?.currentBurn?.burn_mint || 0}
             label={'Burn'}
           />
           <Change
-            previous={data?.previousMint?.mint_burn || 0}
-            current={data?.currentMint?.mint_burn || 0}
+            previous={(data?.previousMint?.mint_burn || 0) + (data?.previousMint?.inflation || 0)}
+            current={(data?.currentMint?.mint_burn || 0) + (data?.currentMint?.inflation || 0)}
             label={'Mint'}
-          />
-          <Change
-            previous={data?.previousMint?.inflation || 0}
-            current={data?.currentMint?.inflation || 0}
-            label={'Inflation'}
           />
         </div>
       </div>
     )
   }
-
-
 }

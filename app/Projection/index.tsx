@@ -45,7 +45,7 @@ async function ServerProjections({timeSelected}: ProjectionsProps) {
 export default function Projections({timeSelected}: ProjectionsProps) {
   return (
     <div className={'h-[910px] md:h-[720px] lg:h-[360px] w-full bg-[color:var(--secondary-background)] px-4 rounded-md flex flex-col'}>
-      <div className={'min-h-[40px] h-[40px] sm:min-h-[50px] flex items-center'}>
+      <div className={'min-h-[40px] h-[40px] md:min-h-[50px] flex items-center'}>
         <h2>Projections</h2>
       </div>
 

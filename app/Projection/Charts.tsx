@@ -41,7 +41,7 @@ function Item({className, title, amountHelper, chartData, value}: ChartItemProps
           className={
             clsx(
               'flex relative',
-              'w-[260px] xl:w-[300px]',
+              'w-[260px] xl:w-[260px]',
               'h-[170px] sm:h-[180px] lg:h-[198px] xl:h-[180px]',
             )
           }
@@ -99,8 +99,6 @@ export default function ProjectionCharts({
     const daysDifference = (new Date(endDate).getTime() - new Date(startDate).getTime()) / (24 * 60 * 60 * 1000)
 
     const burned = getPerYear(data?.burn?.burn_mint || 0, daysDifference)
-    const maxBurn = (burned * 5) / 3
-    const burnData = [Math.min(burned, maxBurn), maxBurn - Math.min(burned, maxBurn)]
 
     const mint = (data?.mint?.inflation || 0) + (data?.mint?.mint_burn || 0)
 
@@ -108,27 +106,17 @@ export default function ProjectionCharts({
       mint,
       daysDifference
     )
-    const maxIssuance = (issuance * 3) / 2
-    const issuanceData = [
-      Math.min(issuance, maxIssuance),
-      maxIssuance - Math.min(issuance, maxIssuance),
-    ]
 
     const growth = new Big(mint).minus(data?.burn?.burn_mint).mul(
       new Big(365).div(daysDifference)
     ).div(data?.supply?.total_supply).mul(100).toNumber()
 
-    const growthData = [
-      growth < 0 ? (growth > -25 ? 25 + growth : 0) : 25,
-      Math.abs(growth),
-      growth > 0 ? (growth < 25 ? 25 - growth : 0) : 25,
-    ]
-
     return {
       burn: {
         value: burned,
         needleValue: burned,
-        data: burnData,
+        needleIndex: 0,
+        data: [burned, Math.abs(20_000_000 - burned)],
         gradient: {
           x0: 50,
           colors: [
@@ -145,12 +133,11 @@ export default function ProjectionCharts({
       },
       growth: {
         value: growth,
-        data: growthData,
-        needleValue:
-          growth > 0 ? (growth > 25 ? 50 : growth + 25) : growth > -25 ? growthData[0] : 0.01,
-        needleIndex: 1,
+        data: [growth + 0.02, Math.abs(0.04 - (growth + 0.02))],
+        needleValue: growth + 0.02,
+        // needleIndex: 2,
         gradient: {
-          x0: growth > 0 ? 150 : 50,
+          x0: 50,
           colors: [
             {
               offset: 0,
@@ -165,14 +152,14 @@ export default function ProjectionCharts({
       },
       issuance: {
         value: issuance,
-        data: issuanceData,
+        data: [issuance, Math.abs(20_000_000 - issuance)],
         needleValue: issuance,
         gradient: {
           x0: 40,
           colors: [
             {
               offset: 0,
-              color: 'rgba(255, 255, 255, 0.1)',
+              color: 'rgb(185,255,248)',
             },
             {
               offset: 0.5,
@@ -201,7 +188,7 @@ export default function ProjectionCharts({
           title={'SUPPLY GROWTH'}
           amountHelper={'Growth/Year'}
           chartData={growth}
-          value={millify(growth.value, {precision: 2}) + '%'}
+          value={growth.value.toFixed(2) + '%'}
           className={'order-2 md:order-1 lg:order-2 md:col-span-2 lg:col-span-1'}
         />
         <Item
