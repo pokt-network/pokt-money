@@ -9,7 +9,7 @@ const labelByTime: Record<Times, string> = {
   last24h: '24h',
   last7d: '7d',
   last30d: '30d',
-  last365d: '365d',
+  last60d: '60d',
 }
 
 interface TimeSelectorProps {

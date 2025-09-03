@@ -8,6 +8,7 @@ import ChangesSupplyMintBurn from '@/Supply/Changes'
 import Projections from '@/Projection'
 import SupplyComposition from '@/SupplyComposition'
 import SupplyCompositionProvider from './context/supplyComposition'
+import SupplyProjection from '@/SupplyProjection/SupplyProjection'
 
 interface HomeProps {
   selectedTime: Times
@@ -31,6 +32,7 @@ function Home({selectedTime}: HomeProps) {
         </div>
         <Projections timeSelected={selectedTime} />
         <SupplyComposition />
+        <SupplyProjection selectedTime={selectedTime} />
       </div>
     </SupplyCompositionProvider>
   )

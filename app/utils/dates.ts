@@ -2,7 +2,7 @@ export enum Times {
   Last24h = 'last24h',
   Last7d = 'last7d',
   Last30d = 'last30d',
-  Last365d = 'last365d',
+  Last60d = 'last60d',
 }
 
 export function normalizeIsoDate(dateStr: string): string {
@@ -135,8 +135,8 @@ export function getStartAndEndDateBasedOnTime(dateStr: string, timeStr: string, 
       start = addDaysToUtc(end, -29)
       break
     }
-    case Times.Last365d: {
-      start = addDaysToUtc(end, -364)
+    case Times.Last60d: {
+      start = addDaysToUtc(end, -59)
       break
     }
   }
@@ -181,9 +181,9 @@ export function getStartMiddleAndEndDateBasedOnTime(
       start = addDaysToUtc(middle, -29)
       break
     }
-    case Times.Last365d: {
-      middle = addDaysToUtc(end, -364)
-      start = addDaysToUtc(middle, -364)
+    case Times.Last60d: {
+      middle = addDaysToUtc(end, -59)
+      start = addDaysToUtc(middle, -59)
       break
     }
   }

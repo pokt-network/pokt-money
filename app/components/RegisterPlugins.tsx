@@ -17,10 +17,12 @@ import {
   registerables,
 } from 'chart.js'
 import { useEffect } from 'react'
+import annotationPlugin from 'chartjs-plugin-annotation';
 
 export default function RegisterPlugins() {
   useEffect(() => {
     Chart.register(
+      annotationPlugin,
       BarController,
       LineController,
       LineElement,
