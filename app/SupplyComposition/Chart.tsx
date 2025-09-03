@@ -102,7 +102,7 @@ function getItem<T extends string>(id: T, total: number, amount: number, date: s
   return {
     id,
     amount: amount || 0,
-    percentage: total ? new Big(amount).div(total).mul(100).toNumber() : 0,
+    percentage: total ? new Big(amount || 0).div(total).mul(100).toNumber() : 0,
     start_date: normalizedDate,
     point: normalizedDate,
   }
@@ -216,12 +216,12 @@ export default function SupplyCompositionChart() {
         wrapped.push(getItem('wrapped', item.total_supply, wrappedValue, item.date_truncated))
 
         const liquidValue = new Big(item.total_supply)
-          .minus(suppliersValue)
-          .minus(appsValue)
-          .minus(gatewaysValue)
-          .minus(validatorsValue)
-          .minus(daoValue)
-          .minus(item.unmigrated_supply)
+          .minus(suppliersValue || 0)
+          .minus(appsValue || 0)
+          .minus(gatewaysValue || 0)
+          .minus(validatorsValue || 0)
+          .minus(daoValue || 0)
+          .minus(item.unmigrated_supply || 0)
           .toNumber()
 
         liquid.push(getItem('liquid', item.total_supply, liquidValue, item.date_truncated))

@@ -107,9 +107,9 @@ export default function ProjectionCharts({
       daysDifference
     )
 
-    const growth = new Big(mint).minus(data?.burn?.burn_mint).mul(
+    const growth = data?.supply?.total_supply ? new Big(mint || 0).minus(data?.burn?.burn_mint || 0).mul(
       new Big(365).div(daysDifference)
-    ).div(data?.supply?.total_supply).mul(100).toNumber()
+    ).div(data?.supply?.total_supply || 0).mul(100).toNumber() : 0
 
     return {
       burn: {

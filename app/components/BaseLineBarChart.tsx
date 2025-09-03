@@ -17,6 +17,7 @@ import {
   getCommonChartLoaderOptions,
   LineBarItem,
 } from '@/utils/chart'
+import annotationPlugin from 'chartjs-plugin-annotation'
 
 interface BaseLineBarChartProps<T extends LineBarItem> {
   chartType?: 'line' | 'bar'
@@ -37,6 +38,7 @@ interface BaseLineBarChartProps<T extends LineBarItem> {
   gradientColors?: Array<GradientColor>
   getCustomDatasetProps?: (id: string) => object
   ref?: React.RefObject<ChartJs<'bar'> | null>
+  customXAxisFormat?: (item: T, index: number) => string
 }
 
 export interface GradientColor {
@@ -73,7 +75,8 @@ export default function BaseLineBarChart<T extends LineBarItem>({
   gradientColors = defaultGradientColors,
   lineColor,
   getCustomDatasetProps,
-  ref
+  ref,
+  customXAxisFormat,
 }: BaseLineBarChartProps<T>) {
     const [colors, setColors] = useState({
       primary: '',
@@ -189,9 +192,13 @@ export default function BaseLineBarChart<T extends LineBarItem>({
               style: 'normal',
             },
             color: colors.secondary,
-            callback: function(value: number) {
+            callback: function(value: number, index: number) {
               if (isLoading && chartData.labels.length > 0) {
                 return chartData.labels[value]
+              }
+
+              if (customXAxisFormat) {
+                return customXAxisFormat(dataEntries[0][1][value], index)
               }
 
               const date = formatDate(dataEntries[0][1][value]?.point, unitToFormatDate, true)
@@ -332,6 +339,7 @@ export default function BaseLineBarChart<T extends LineBarItem>({
         data={chartData as unknown as ChartData<'bar'>}
         redraw={false}
         options={options}
+        plugins={[annotationPlugin]}
       />
     )
   }
