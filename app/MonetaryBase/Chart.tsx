@@ -217,7 +217,7 @@ export default function MonetaryBaseChart() {
           )
         })}
       </div>
-      <div className={'h-[250px]'}>
+      <div className={'h-[246px]'}>
         {chart}
       </div>
     </>
