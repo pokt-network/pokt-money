@@ -1,33 +1,22 @@
 import { Skeleton } from '@/components/ui/skeleton'
 import React from 'react'
 
-interface ChangeLoaderProps {
-  title: string
-}
-
-function ChangeLoader({title}: ChangeLoaderProps) {
+function ChangeLoader({title}: {title: string}) {
   return (
     <div className={'flex flex-col gap-0.5'}>
-      <p
-        className={'text-[13px] text-[color:var(--secondary-foreground)]'}
-      >
+      <p className={'text-[11px] text-[color:var(--secondary-foreground)]'}>
         {title}
       </p>
-      <div className={'flex flex-row gap-2 items-center'}>
-        <Skeleton className={'h-5 w-[80px]'} />
-        <Skeleton className={'h-6 w-[70px] rounded-full'} />
-      </div>
+      <Skeleton className={'h-4 w-[80px]'} />
     </div>
   )
 }
 
 export default function SupplyMintBurnLoader() {
   return (
-    <div>
-      <Skeleton className={'h-6 mb-2 xl:mb-0 xl:h-8 w-[200px] ml-1.5 -mt-[5px] xl:mt-3'} />
-      <hr className={'h-[1px] bg-[color:var(--border)] mt-5 xl:mt-5 mb-4 xl:mb-6'} />
-
-      <div className={'-mt-[5px] flex-wrap xl:mt-4 flex flex-row items-center justify-between gap-2.5 pl-1 pr-0.5'}>
+    <div className={'mt-2 flex flex-row flex-wrap gap-x-4 gap-y-5 items-center pl-2'}>
+      <Skeleton className={'h-8 w-[200px]'} />
+      <div className={'flex flex-row items-center gap-4'}>
         <ChangeLoader title={'Burn'} />
         <ChangeLoader title={'Mint'} />
       </div>

@@ -12,78 +12,25 @@ import RetryError from '@/components/ErrorRetry'
 import { formatUpokt } from '@/utils/formatAmounts'
 import Big from 'big.js'
 import clsx from 'clsx'
-import { Minus, TrendingDown, TrendingUp } from 'lucide-react'
 
 interface ChangeProps {
-  previous: string | number
   current: string | number
   label: string
 }
 
-function Change({previous, current, label}: ChangeProps) {
-  const diff = new Big(current).minus(previous)
-  const changePercentage = Number(previous) === 0 ? new Big(100) : diff.div(previous).mul(100)
-
-  let arrow: React.ReactNode = null
-
-  if (diff.gt(0)) {
-    arrow = (
-      <TrendingUp className={'text-[color:var(--success)] w-3 h-4 rotate-[-10deg]'} />
-    )
-  } else if (diff.lt(0)) {
-    arrow = (
-      <TrendingDown className={'text-[color:var(--error)] w-3 h-4 rotate-[10deg]'} />
-    )
-  } else {
-    arrow = (
-      <Minus className={'text-[color:var(--secondary-foreground)] w-3 h-4'} />
-    )
-  }
-
+function Change({current, label}: ChangeProps) {
   return (
     <div className={'flex gap-0.5 flex-col'}>
-      <p
-        className={'text-[13px] text-[color:var(--secondary-foreground)]'}
-      >
+      <p className={'text-[11px] text-[color:var(--secondary-foreground)]'}>
         {label}
       </p>
-
-      <div className={'flex flex-row gap-2 items-center'}>
-        <p className={'text-[13px] font-medium'}>
-          {formatUpokt({
-            amount: current,
-            includeSymbol: false,
-            maxDecimals: 2
-          })}
-        </p>
-
-        <div className={'flex flex-row items-center gap-1.5'}>
-          <div
-            className={
-              clsx(
-                'h-6 min-w-10 py-1 px-2 flex flex-row items-center justify-center rounded-full gap-1',
-                diff.gt(0) && 'bg-[color:var(--success-background)]',
-                diff.lt(0) && 'bg-[color:var(--error-background)]',
-                diff.eq(0) && 'bg-gray-500/20'
-              )
-            }
-          >
-            <p
-              className={
-                clsx(
-                  'text-xs font-semibold',
-                  diff.gt(0) && 'text-[color:var(--success)]',
-                  diff.lt(0) && 'text-[color:var(--error)]',
-                  diff.eq(0) && 'text-[color:var(--secondary-foreground)]'
-                )
-              }
-            >
-              {Number(changePercentage.abs().toFixed(1))}%
-            </p>
-            {arrow}
-          </div>
-        </div>
-      </div>
+      <p className={'text-xs font-medium'}>
+        {formatUpokt({
+          amount: current,
+          includeSymbol: false,
+          maxDecimals: 2
+        })}
+      </p>
     </div>
   )
 }
@@ -140,8 +87,8 @@ export default function ClientSupplyMintBurn({
     }
 
     return (
-      <div className={'-mt-[5px] xl:mt-3'}>
-        <div className={'flex flex-row gap-2 items-center h-8 mb-1 pl-2 pb-2'}>
+      <div className={'mt-2 flex flex-row flex-wrap gap-x-4 gap-y-5 items-center pl-2'}>
+        <div className={'flex flex-row gap-2 items-center'}>
           {symbol}
           <p
             className={
@@ -165,16 +112,12 @@ export default function ClientSupplyMintBurn({
           </p>
         </div>
 
-        <hr className={'h-[1px] bg-[color:var(--border)] mt-3 xl:mt-5 mb-4 xl:mb-6'} />
-
-        <div className={'-mt-[5px] flex-wrap xl:mt-4 flex flex-row items-center justify-between gap-2.5 pl-1 pr-0.5'}>
+        <div className={'flex flex-row items-center gap-4 -mt-3'}>
           <Change
-            previous={data?.previousBurn?.burn_mint || 0}
             current={data?.currentBurn?.burn_mint || 0}
             label={'Burn'}
           />
           <Change
-            previous={(data?.previousMint?.mint_burn || 0) + (data?.previousMint?.inflation || 0)}
             current={(data?.currentMint?.mint_burn || 0) + (data?.currentMint?.inflation || 0)}
             label={'Mint'}
           />

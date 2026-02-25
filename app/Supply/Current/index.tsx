@@ -2,6 +2,7 @@ import type { DocumentNodeData } from '@/hooks/useFetchOnBlock'
 import { getLatestBlock } from '@/api/blocks'
 import { getClient } from '@/config/apollo/rsc'
 import { currentSupplyDocument, getCurrentSupplyVariables } from '@/Supply/operations'
+import { currentSupplyMintBurnDocument, getCurrentSupplyMintBurnVariables } from '@/Projection/operations'
 import { Times } from '@/utils/dates'
 import { Suspense } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -12,17 +13,26 @@ interface CurrentSupplyProps {
 }
 
 async function ServerCurrentSupply({selectedTime}: CurrentSupplyProps) {
-  let data: DocumentNodeData<typeof currentSupplyDocument> | null = null, error = false
+  let data: DocumentNodeData<typeof currentSupplyDocument> | null = null,
+    mintBurnData: DocumentNodeData<typeof currentSupplyMintBurnDocument> | null = null,
+    error = false
 
   try {
     const latestBlock = await getLatestBlock()
 
-    const response = await getClient().query({
-      query: currentSupplyDocument,
-      variables: getCurrentSupplyVariables(latestBlock.timestamp, selectedTime)
-    })
+    const [supplyRes, mintBurnRes] = await Promise.all([
+      getClient().query({
+        query: currentSupplyDocument,
+        variables: getCurrentSupplyVariables(latestBlock.timestamp, selectedTime)
+      }),
+      getClient().query({
+        query: currentSupplyMintBurnDocument,
+        variables: getCurrentSupplyMintBurnVariables(latestBlock.timestamp, selectedTime)
+      })
+    ])
 
-    data = response.data
+    data = supplyRes.data
+    mintBurnData = mintBurnRes.data
   } catch {
     error = true
   }
@@ -30,6 +40,7 @@ async function ServerCurrentSupply({selectedTime}: CurrentSupplyProps) {
   return (
     <ClientCurrentSupply
       initialData={data}
+      initialMintBurnData={mintBurnData}
       initialError={error}
       selectedTime={selectedTime}
     />
@@ -38,14 +49,17 @@ async function ServerCurrentSupply({selectedTime}: CurrentSupplyProps) {
 
 export default function CurrentSupply({selectedTime}: CurrentSupplyProps) {
   return (
-    <div className={'h-[160px] xl:h-[142px] w-full bg-[color:var(--secondary-background)] px-4 rounded-md'}>
-      <div className={'h-[50px] flex items-center mb-2.5'}>
+    <div className={'min-h-[110px] w-full bg-[color:var(--secondary-background)] px-4 pb-3 rounded-md'}>
+      <div className={'h-[50px] flex items-center mb-1'}>
         <h2>Total Supply</h2>
       </div>
       <Suspense
         key={selectedTime}
         fallback={(
-          <Skeleton className={'mt-4 h-7 w-[300px]'} />
+          <div className={'flex flex-row flex-wrap gap-x-2.5 gap-y-5 items-center mt-2'}>
+            <Skeleton className={'h-8 w-[260px]'} />
+            <Skeleton className={'h-4 w-[80px]'} />
+          </div>
         )}
       >
         <ServerCurrentSupply selectedTime={selectedTime} />

@@ -38,7 +38,7 @@ async function ServerChangesSupplyMintBurn({selectedTime}: ChangesSupplyMintBurn
 
 export default function ChangesSupplyMintBurn({selectedTime}: ChangesSupplyMintBurnProps) {
   return (
-    <div className={'h-auto min-h-[160px] sm:h-[160px] xl:h-[202px] w-full bg-[color:var(--secondary-background)] px-4 rounded-md'}>
+    <div className={'min-h-[110px] w-full bg-[color:var(--secondary-background)] px-4 pb-3 rounded-md'}>
       <div className={'h-[50px] flex items-center'}>
         <h2>Supply Change</h2>
       </div>
