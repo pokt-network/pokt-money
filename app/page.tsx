@@ -5,10 +5,10 @@ import { timeKey } from '@/constants'
 import MonetaryBase from '@/MonetaryBase'
 import CurrentSupply from '@/Supply/Current'
 import ChangesSupplyMintBurn from '@/Supply/Changes'
-import Projections from '@/Projection'
 import SupplyComposition from '@/SupplyComposition'
 import SupplyCompositionProvider from './context/supplyComposition'
 import SupplyProjection from '@/SupplyProjection/SupplyProjection'
+import CUTTMEvolution from '@/CUTTMEvolution/CUTTMEvolution'
 
 interface HomeProps {
   selectedTime: Times
@@ -23,14 +23,12 @@ function Home({selectedTime}: HomeProps) {
       initialVariables={null}
     >
       <div className={'flex flex-col gap-4 w-full'}>
-        <div className={'flex flex-col xl:flex-row gap-4 w-full'}>
-          <MonetaryBase />
-          <div className={'flex flex-col min-[900px]:flex-row xl:flex-col gap-4 w-full xl:w-1/3'}>
-            <ChangesSupplyMintBurn selectedTime={selectedTime} />
-            <CurrentSupply selectedTime={selectedTime} />
-          </div>
+        <MonetaryBase />
+        <div className={'flex flex-col sm:flex-row gap-4 w-full'}>
+          <ChangesSupplyMintBurn selectedTime={selectedTime} />
+          <CurrentSupply selectedTime={selectedTime} />
         </div>
-        <Projections timeSelected={selectedTime} />
+        <CUTTMEvolution selectedTime={selectedTime} />
         <SupplyComposition />
         <SupplyProjection selectedTime={selectedTime} />
       </div>

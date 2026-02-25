@@ -166,6 +166,7 @@ export function fillChartDataOld<T extends LineBarItem>({
 
   return passingResultsToPoints(
     points,
+    // eslint-disable-next-line
     // @ts-ignore
     data,
     {
@@ -259,6 +260,7 @@ export function fillChartData<T extends LineBarItem>({
       result[index] = existingData
     } else {
       // Create missing point with default props
+      // eslint-disable-next-line
       // @ts-ignore
       result[index] = {
         ...defaultProps,
