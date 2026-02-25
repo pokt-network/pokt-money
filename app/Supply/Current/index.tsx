@@ -49,7 +49,7 @@ async function ServerCurrentSupply({selectedTime}: CurrentSupplyProps) {
 
 export default function CurrentSupply({selectedTime}: CurrentSupplyProps) {
   return (
-    <div className={'min-h-[110px] w-full bg-[color:var(--secondary-background)] px-4 pb-3 rounded-md'}>
+    <div className={'min-h-[110px] xl:min-h-[160px] w-full bg-[color:var(--secondary-background)] px-4 pb-3 rounded-md'}>
       <div className={'h-[50px] flex items-center mb-1'}>
         <h2>Total Supply</h2>
       </div>

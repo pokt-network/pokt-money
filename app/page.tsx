@@ -23,10 +23,12 @@ function Home({selectedTime}: HomeProps) {
       initialVariables={null}
     >
       <div className={'flex flex-col gap-4 w-full'}>
-        <MonetaryBase />
-        <div className={'flex flex-col sm:flex-row gap-4 w-full'}>
-          <ChangesSupplyMintBurn selectedTime={selectedTime} />
-          <CurrentSupply selectedTime={selectedTime} />
+        <div className={'flex flex-col xl:flex-row gap-4 w-full items-center'}>
+          <MonetaryBase />
+          <div className={'flex flex-col xl:flex-col sm:flex-row gap-4 w-full xl:min-w-[390px] xl:w-[390px]'}>
+            <ChangesSupplyMintBurn selectedTime={selectedTime} />
+            <CurrentSupply selectedTime={selectedTime} />
+          </div>
         </div>
         <CUTTMEvolution selectedTime={selectedTime} />
         <SupplyComposition />
