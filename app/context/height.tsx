@@ -1,8 +1,8 @@
 'use client'
 
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { useLazyQuery, useSubscription } from '@apollo/client'
-import { subscriptionQuery, indexerMetadataDocument } from '@/api/operations'
+import React, { createContext, useContext, useEffect, useState } from 'react'
+import { useQuery } from '@apollo/client'
+import { statusQuery } from '@/api/operations'
 
 interface HeightContext {
   currentHeight: number
@@ -43,45 +43,37 @@ export default function HeightContextProvider({
     currentTime: firstTime,
   })
 
-  useSubscription(subscriptionQuery, {
-    ignoreResults: true,
-    onData: (data) => {
-      const block = data?.data?.data?.blocks
-      const newBlockId = Number(block?.id)
-      if (block && newBlockId > currentHeight) {
-        setState({
-          currentHeight: newBlockId,
-          currentTime: block._entity?.timestamp || currentTime,
-        })
-
-        if (newBlockId > networkHeight) {
-          setNetworkHeight(newBlockId)
-        }
-      }
-    }
-  })
-
-  const [fetchIndexerMetadata] = useLazyQuery(indexerMetadataDocument, {
+  const {data, refetch} = useQuery(statusQuery, {
     fetchPolicy: 'network-only',
     nextFetchPolicy: 'network-only',
+    pollInterval: 15 * 1000,
   })
 
-  const updateNetworkHeight = useCallback(() => {
-    fetchIndexerMetadata().then((res) => {
-      const targetHeight = res?.data?._metadata?.targetHeight
-
-      if (targetHeight) {
-        setNetworkHeight(Number(targetHeight))
-      }
-    })
-  }, [fetchIndexerMetadata])
-
+  const updateNetworkHeight = () => {
+    refetch()
+  }
 
   useEffect(() => {
-    const interval = setInterval(updateNetworkHeight, 5 * 1000)
+    const block = data?.blocks?.nodes[0]
+    const newBlockId = Number(block?.id)
 
-    return () => clearInterval(interval)
-  }, [currentHeight, updateNetworkHeight])
+    if (block && newBlockId > currentHeight) {
+      setState({
+        currentHeight: newBlockId,
+        currentTime: block.timestamp || currentTime,
+      })
+
+      if (newBlockId > networkHeight) {
+        setNetworkHeight(newBlockId)
+      }
+    }
+
+    const targetHeight = data?._metadata?.targetHeight
+    if (targetHeight && Number(targetHeight) > networkHeight) {
+      setNetworkHeight(Number(targetHeight))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data])
 
   return (
     <HeightContext.Provider
