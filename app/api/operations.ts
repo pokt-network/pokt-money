@@ -47,16 +47,17 @@ export const latestBlockQuery = graphql(`
   }
 `)
 
-export const subscriptionQuery = graphql(`
-  subscription blocks {
-    blocks {
-      id
-      mutation_type
-      _entity {
+export const statusQuery = graphql(`
+  query status {
+    blocks(orderBy: ID_DESC, first: 1) {
+      nodes {
         id
-        height: id
         timestamp
       }
+    }
+    _metadata {
+      targetHeight
+      lastProcessedHeight
     }
   }
 `)

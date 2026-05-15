@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "docker:build": "docker build -t registry.digitalocean.com/poktscan/pokt-money:shannon ."
+    "docker:build": "pnpm codegen && docker build --label org.opencontainers.image.revision=$(git rev-parse HEAD) --label org.opencontainers.image.ref.name=$(git rev-parse --abbrev-ref HEAD) --label org.opencontainers.image.source=https://github.com/pokt-network/pokt-money --label org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ) -t registry.infra.pocket.network/pnf/pokt-money:sha-$(git rev-parse --short HEAD) -t registry.infra.pocket.network/pnf/pokt-money:latest .",
+    "docker:push": "docker push registry.infra.pocket.network/pnf/pokt-money:sha-$(git rev-parse --short HEAD) && docker push registry.infra.pocket.network/pnf/pokt-money:latest"
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",
@@ -23,11 +24,10 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "graphql": "^16.11.0",
-    "graphql-ws": "^6.0.6",
     "lodash": "^4.17.21",
     "lucide-react": "^0.525.0",
     "millify": "^6.1.0",
-    "next": "15.5.9",
+    "next": "15.5.16",
     "react": "19.1.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "19.1.0",
