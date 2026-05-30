@@ -70,6 +70,11 @@ const verticalLineLabels: Array<LineLabel> = [
     xAdjust: 10,
     paddingBottom: 4
   },
+  {
+    label: ['PIP-41', 'Deflationary'],
+    date: "2026-02-11T00:00:00.000Z",
+    yAdjust: 20
+  },
 ]
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -344,6 +349,7 @@ export default function ClientSupplyProjection(props: ClientSupplyProjectionProp
           }
         }}
         customXAxisFormat={(item, index) => {
+          if (!item) return ''
           const date = new Date(item.start_date)
           const year = date.getFullYear()
 
