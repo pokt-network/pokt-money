@@ -1,12 +1,10 @@
 'use client'
 
-import useFetchOnBlock, { DocumentNodeData } from "@/hooks/useFetchOnBlock";
-import {
-  getSupplyMintBurnAndChangesVariables,
-  supplyMintBurnAndChangesDocument,
-} from '../operations'
+import { useFetchOnBlockCore } from "@/hooks/useFetchOnBlock";
+import { fetchSupplyMetrics } from '@/Supply/fetchSupplyMetrics'
+import type { SupplyMetrics } from '@/Supply/types'
 import { Times } from '@/utils/dates'
-import React, { useCallback } from 'react'
+import React from 'react'
 import SupplyMintBurnLoader from '@/Supply/Changes/Loader'
 import RetryError from '@/components/ErrorRetry'
 import { formatUpokt } from '@/utils/formatAmounts'
@@ -36,7 +34,7 @@ function Change({current, label}: ChangeProps) {
 }
 
 interface ClientSupplyMintBurnProps {
-  initialData: DocumentNodeData<typeof supplyMintBurnAndChangesDocument> | null
+  initialData: SupplyMetrics | null
   initialError: boolean
   selectedTime: Times
 }
@@ -46,13 +44,11 @@ export default function ClientSupplyMintBurn({
   initialError,
   selectedTime
 }: ClientSupplyMintBurnProps) {
-  const variables = useCallback((_: number, timestamp: string) => {
-    return getSupplyMintBurnAndChangesVariables(timestamp, selectedTime)
-  }, [selectedTime])
-
-  const {data, error, refetch, isLoading} = useFetchOnBlock({
-    query: supplyMintBurnAndChangesDocument,
-    variables,
+  // Refreshes on every block through our own route handler, which serves the server-side cache
+  // instead of re-running the indexer aggregates.
+  const {data, error, refetch, isLoading} = useFetchOnBlockCore({
+    fetcher: fetchSupplyMetrics,
+    variables: selectedTime,
     initialResult: initialData,
     initialError,
   })

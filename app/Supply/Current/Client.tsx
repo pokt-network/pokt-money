@@ -1,9 +1,9 @@
 'use client'
-import useFetchOnBlock, { DocumentNodeData } from '@/hooks/useFetchOnBlock'
-import { currentSupplyDocument, getCurrentSupplyVariables } from '@/Supply/operations'
-import { currentSupplyMintBurnDocument, getCurrentSupplyMintBurnVariables } from '@/Projection/operations'
+import { useFetchOnBlockCore } from '@/hooks/useFetchOnBlock'
+import { fetchSupplyMetrics } from '@/Supply/fetchSupplyMetrics'
+import type { SupplyMetrics } from '@/Supply/types'
 import { Times } from '@/utils/dates'
-import { useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
 import { formatUpokt } from '@/utils/formatAmounts'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
@@ -11,8 +11,7 @@ import Big from 'big.js'
 import clsx from 'clsx'
 
 interface ClientCurrentSupplyProps {
-  initialData: DocumentNodeData<typeof currentSupplyDocument> | null
-  initialMintBurnData: DocumentNodeData<typeof currentSupplyMintBurnDocument> | null
+  initialData: SupplyMetrics | null
   initialError: boolean
   selectedTime: Times
 }
@@ -20,46 +19,31 @@ interface ClientCurrentSupplyProps {
 export default function ClientCurrentSupply({
   initialError,
   initialData,
-  initialMintBurnData,
   selectedTime,
 }: ClientCurrentSupplyProps) {
-  const variables = useCallback((_: number, timestamp: string) => {
-    return getCurrentSupplyVariables(timestamp, selectedTime)
-  }, [selectedTime])
-
-  const mintBurnVariables = useCallback((_: number, timestamp: string) => {
-    return getCurrentSupplyMintBurnVariables(timestamp, selectedTime)
-  }, [selectedTime])
-
-  const {data, error, refetch, isLoading} = useFetchOnBlock({
-    query: currentSupplyDocument,
-    variables,
+  // Refreshes on every block through our own route handler, which serves the server-side cache
+  // instead of re-running the indexer aggregates.
+  const {data, error, refetch, isLoading} = useFetchOnBlockCore({
+    fetcher: fetchSupplyMetrics,
+    variables: selectedTime,
     initialResult: initialData,
     initialError,
   })
 
-  const {data: mintBurnData} = useFetchOnBlock({
-    query: currentSupplyMintBurnDocument,
-    variables: mintBurnVariables,
-    initialResult: initialMintBurnData,
-    initialError,
-  })
-
   const growthPerYear = useMemo(() => {
-    if (!mintBurnData?.supply?.total_supply) return null
+    if (!data?.currentSupply?.total_supply) return null
 
-    const { startDate, endDate } = getCurrentSupplyMintBurnVariables(new Date().toISOString(), selectedTime)
-    const daysDifference = (new Date(endDate).getTime() - new Date(startDate).getTime()) / (24 * 60 * 60 * 1000)
+    const daysDifference = (new Date(data.endDate).getTime() - new Date(data.middleDate).getTime()) / (24 * 60 * 60 * 1000)
 
-    const mint = (mintBurnData.mint?.inflation || 0) + (mintBurnData.mint?.mint_burn || 0)
-    const burn = mintBurnData.burn?.burn_mint || 0
+    const mint = (data.currentMint?.inflation || 0) + (data.currentMint?.mint_burn || 0)
+    const burn = data.currentBurn?.burn_mint || 0
 
     return new Big(mint).minus(burn)
       .mul(new Big(365).div(daysDifference))
-      .div(mintBurnData.supply.total_supply)
+      .div(data.currentSupply.total_supply)
       .mul(100)
       .toNumber()
-  }, [mintBurnData, selectedTime])
+  }, [data])
 
   if (isLoading) {
     return (

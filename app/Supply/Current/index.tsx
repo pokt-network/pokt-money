@@ -1,8 +1,5 @@
-import type { DocumentNodeData } from '@/hooks/useFetchOnBlock'
-import { getLatestBlock } from '@/api/blocks'
-import { getClient } from '@/config/apollo/rsc'
-import { currentSupplyDocument, getCurrentSupplyVariables } from '@/Supply/operations'
-import { currentSupplyMintBurnDocument, getCurrentSupplyMintBurnVariables } from '@/Projection/operations'
+import { getSupplyMetrics } from '@/api/supplyMetrics'
+import type { SupplyMetrics } from '@/Supply/types'
 import { Times } from '@/utils/dates'
 import { Suspense } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -13,26 +10,11 @@ interface CurrentSupplyProps {
 }
 
 async function ServerCurrentSupply({selectedTime}: CurrentSupplyProps) {
-  let data: DocumentNodeData<typeof currentSupplyDocument> | null = null,
-    mintBurnData: DocumentNodeData<typeof currentSupplyMintBurnDocument> | null = null,
-    error = false
+  let data: SupplyMetrics | null = null, error = false
 
   try {
-    const latestBlock = await getLatestBlock()
-
-    const [supplyRes, mintBurnRes] = await Promise.all([
-      getClient().query({
-        query: currentSupplyDocument,
-        variables: getCurrentSupplyVariables(latestBlock.timestamp, selectedTime)
-      }),
-      getClient().query({
-        query: currentSupplyMintBurnDocument,
-        variables: getCurrentSupplyMintBurnVariables(latestBlock.timestamp, selectedTime)
-      })
-    ])
-
-    data = supplyRes.data
-    mintBurnData = mintBurnRes.data
+    // Shares the cached queries with ChangesSupplyMintBurn within the same render.
+    data = await getSupplyMetrics(selectedTime)
   } catch {
     error = true
   }
@@ -40,7 +22,6 @@ async function ServerCurrentSupply({selectedTime}: CurrentSupplyProps) {
   return (
     <ClientCurrentSupply
       initialData={data}
-      initialMintBurnData={mintBurnData}
       initialError={error}
       selectedTime={selectedTime}
     />

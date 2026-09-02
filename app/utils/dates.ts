@@ -115,6 +115,20 @@ export function addMinutesToUtc(date: Date | string, minutes: number) {
   return new Date(date.getTime() + minutes * 60 * 1000)
 }
 
+/**
+ * Floors a date to the previous multiple of `minutes` (UTC). Used to give cache keys that stay
+ * stable for a whole bucket instead of changing with every block timestamp.
+ */
+export function floorDateToMinutes(date: Date | string, minutes: number) {
+  if (typeof date === 'string') {
+    date = getDateFromIsoString(date);
+  }
+
+  const bucketMs = minutes * 60 * 1000
+
+  return new Date(Math.floor(date.getTime() / bucketMs) * bucketMs)
+}
+
 export function getStartAndEndDateBasedOnTime(dateStr: string, timeStr: string, endAndStartOfUnit = false) {
   const time = getValidTime(timeStr)
 

@@ -1,8 +1,6 @@
 import { Times } from '@/utils/dates'
-import { DocumentNodeData } from '@/hooks/useFetchOnBlock'
-import { getSupplyMintBurnAndChangesVariables, supplyMintBurnAndChangesDocument } from '@/Supply/operations'
-import { getLatestBlock } from '@/api/blocks'
-import { getClient } from '@/config/apollo/rsc'
+import { getSupplyMetrics } from '@/api/supplyMetrics'
+import type { SupplyMetrics } from '@/Supply/types'
 import ClientSupplyMintBurn from '@/Supply/Changes/Client'
 import { Suspense } from 'react'
 import SupplyMintBurnLoader from '@/Supply/Changes/Loader'
@@ -11,17 +9,10 @@ interface ChangesSupplyMintBurnProps {
   selectedTime: Times
 }
 async function ServerChangesSupplyMintBurn({selectedTime}: ChangesSupplyMintBurnProps) {
-  let data: DocumentNodeData<typeof supplyMintBurnAndChangesDocument> | null = null, error = false
+  let data: SupplyMetrics | null = null, error = false
 
   try {
-    const latestBlock = await getLatestBlock()
-
-    const response = await getClient().query({
-      query: supplyMintBurnAndChangesDocument,
-      variables: getSupplyMintBurnAndChangesVariables(latestBlock.timestamp, selectedTime)
-    })
-
-    data = response.data
+    data = await getSupplyMetrics(selectedTime)
   } catch {
     error = true
   }
