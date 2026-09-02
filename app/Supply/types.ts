@@ -2,7 +2,7 @@ import type { Times } from '@/utils/dates'
 
 // Shapes of the JSON scalars returned by the indexer's supply aggregate functions.
 export interface TotalSupplyBetweenDates {
-  total_supply?: number | string | null
+  total_supply?: number | null
 }
 
 export interface MintBreakdownBetweenDates {
