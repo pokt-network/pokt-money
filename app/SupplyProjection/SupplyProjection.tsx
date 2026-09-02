@@ -1,53 +1,24 @@
-import { unstable_cache } from 'next/cache'
-import { getLatestBlock } from '@/api/blocks'
-import { getClient } from '@/config/apollo/rsc'
-import { getUtcEndOfDay, Times } from '@/utils/dates'
-import { getShannonSupplyVariables, getTotalSupplyByDayDocument } from '@/SupplyProjection/operations'
-import { currentSupplyDocument, getCurrentSupplyVariables } from '@/Supply/operations'
+import { getSupplyMetrics } from '@/api/supplyMetrics'
+import { getShannonSupplyByDay } from '@/api/supplyByDay'
+import { Times } from '@/utils/dates'
+import type { SupplyMetrics } from '@/Supply/types'
+import type { ShannonSupplyByDay } from '@/SupplyProjection/types'
 import ClientSupplyProjection from '@/SupplyProjection/Client'
-import { DocumentNodeData } from '@/hooks/useFetchOnBlock'
 import morseSupply from './morseSupplyByDay.json'
-
-export interface SupplyByDayItem {
-  day: string
-  total_supply: number
-}
-
-const shannonSupplyUntilYesterday = unstable_cache(
-  async (currentDate: string) => {
-    const response = await getClient().query({
-      query: getTotalSupplyByDayDocument,
-      variables: getShannonSupplyVariables(currentDate)
-    })
-
-    return response.data as {
-      getTotalSupplyByDay: Array<SupplyByDayItem>
-    }
-  },
-  ['shannonSupplyUntilYesterday'],
-  {
-    tags: ['shannonSupplyUntilYesterday']
-  }
-)
 
 async function ServerSupplyProjection({selectedTime}: { selectedTime: Times}) {
   let error = false,
-    currentSupplyData: DocumentNodeData<typeof currentSupplyDocument> | null = null,
-    shannonSupplyData: Awaited<ReturnType<typeof shannonSupplyUntilYesterday>> | null = null
+    supplyMetrics: SupplyMetrics | null = null,
+    shannonSupplyData: ShannonSupplyByDay | null = null
 
   try {
-    const latestBlock = await getLatestBlock()
-
-    const [currentSupplyRes, shannonSupplyUntilYesterdayData] = await Promise.all([
-      getClient().query({
-        query: currentSupplyDocument,
-        variables: getCurrentSupplyVariables(latestBlock.timestamp, selectedTime)
-      }),
-      // we are passing the end of the day to ensure the cache works for the same day
-      shannonSupplyUntilYesterday(getUtcEndOfDay(latestBlock.timestamp).toISOString())
+    // Both are shared with the other supply cards / requests through the server cache.
+    const [supplyMetricsRes, shannonSupplyUntilYesterdayData] = await Promise.all([
+      getSupplyMetrics(selectedTime),
+      getShannonSupplyByDay()
     ])
 
-    currentSupplyData = currentSupplyRes.data
+    supplyMetrics = supplyMetricsRes
     shannonSupplyData = shannonSupplyUntilYesterdayData
   } catch {
     error = true
@@ -56,7 +27,7 @@ async function ServerSupplyProjection({selectedTime}: { selectedTime: Times}) {
   return (
     <ClientSupplyProjection
       initialError={error}
-      initialCurrentSupply={currentSupplyData}
+      initialSupplyMetrics={supplyMetrics}
       initialShannonSupply={shannonSupplyData}
       selectedTime={selectedTime}
       morseSupply={morseSupply.data.ListSummaryBetweenDates.points}

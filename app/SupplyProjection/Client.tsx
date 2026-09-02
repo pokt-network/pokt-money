@@ -1,21 +1,19 @@
 'use client'
-import type { SupplyByDayItem } from '@/SupplyProjection/SupplyProjection'
-import { useCallback, useMemo } from 'react'
+import type { ShannonSupplyByDay } from '@/SupplyProjection/types'
+import type { SupplyMetrics } from '@/Supply/types'
+import { useMemo } from 'react'
 import { ScriptableContext, type TooltipItem } from 'chart.js'
 import { addDaysToUtc, getUtcEndOfDay, getUtcStartOfDay, normalizeIsoDate, Times } from '@/utils/dates'
-import { currentSupplyDocument, getCurrentSupplyVariables } from '@/Supply/operations'
-import useFetchOnBlock, { DocumentNodeData } from '@/hooks/useFetchOnBlock'
+import { fetchSupplyMetrics } from '@/Supply/fetchSupplyMetrics'
+import { fetchSupplyByDay } from '@/SupplyProjection/fetchSupplyByDay'
+import { useFetchOnBlockCore } from '@/hooks/useFetchOnBlock'
 import BaseLineBarChart from '@/components/BaseLineBarChart'
 import useDidMountEffect from '@/hooks/useDidMountEffect'
 import { useHeightContext } from '@/context/height'
 import { formatUpokt } from '@/utils/formatAmounts'
 import RetryError from '@/components/ErrorRetry'
 import { fillChartData } from '@/utils/chart'
-import {
-  getShannonSupplyVariables,
-  getTotalSupplyByDayDocument,
-  startDateMigration,
-} from '@/SupplyProjection/operations'
+import { startDateMigration } from '@/SupplyProjection/operations'
 import Big from 'big.js'
 
 interface LineLabel {
@@ -149,26 +147,23 @@ interface ProcessedData {
 function useSupplyProjectionData({
  selectedTime,
  initialError,
- initialCurrentSupply,
+ initialSupplyMetrics,
  initialShannonSupply,
  morseSupply,
 }: ClientSupplyProjectionProps) {
   const {currentTime} = useHeightContext()
   const endOfDayCurrentTime = currentTime ? getUtcEndOfDay(currentTime).toISOString() : ''
 
-  const shannonSupplyVariables = useCallback((_: number, timestamp: string) => {
-    return getShannonSupplyVariables(timestamp)
-    // eslint-disable-next-line
-  }, [endOfDayCurrentTime])
-
+  // The daily series is served from the server cache and only re-fetched when the day changes
+  // (or when the server render failed), never per block.
   const {
     data: shannonSupply,
     error: errorShannonSupply,
     refetch: fetchShannonSupply,
     isLoading: loadingShannonSupply
-  } = useFetchOnBlock({
-    variables: shannonSupplyVariables,
-    query: getTotalSupplyByDayDocument,
+  } = useFetchOnBlockCore({
+    fetcher: fetchSupplyByDay,
+    variables: endOfDayCurrentTime,
     initialError,
     initialResult: initialShannonSupply,
     skip: !!initialShannonSupply,
@@ -176,22 +171,20 @@ function useSupplyProjectionData({
 
   useDidMountEffect(() => {
     fetchShannonSupply()
-  }, [shannonSupplyVariables])
+  }, [endOfDayCurrentTime])
 
-  const variables = useCallback((_: number, timestamp: string) => {
-    return getCurrentSupplyVariables(timestamp, selectedTime)
-  }, [selectedTime])
-
+  // Refreshes on every block through our own route handler, which serves the server-side cache
+  // instead of re-running the indexer aggregates.
   const {
     data: currentSupply,
     error: errorCurrentSupply,
     refetch: fetchCurrentSupply,
     isLoading: loadingCurrentSupply,
-  } = useFetchOnBlock({
-    query: currentSupplyDocument,
+  } = useFetchOnBlockCore({
+    fetcher: fetchSupplyMetrics,
+    variables: selectedTime,
     initialError,
-    initialResult: initialCurrentSupply,
-    variables,
+    initialResult: initialSupplyMetrics,
   })
 
   const isLoading = loadingCurrentSupply || loadingShannonSupply || (!shannonSupply && !errorShannonSupply) || (!currentSupply && !errorCurrentSupply)
@@ -257,10 +250,8 @@ function useSupplyProjectionData({
 interface ClientSupplyProjectionProps {
   selectedTime: Times
   initialError: boolean
-  initialCurrentSupply: DocumentNodeData<typeof currentSupplyDocument> | null
-  initialShannonSupply: {
-    getTotalSupplyByDay: Array<SupplyByDayItem>
-  } | null
+  initialSupplyMetrics: SupplyMetrics | null
+  initialShannonSupply: ShannonSupplyByDay | null
   morseSupply: Array<{
     "point": string
     "start_date": string

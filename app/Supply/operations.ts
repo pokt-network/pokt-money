@@ -1,6 +1,6 @@
 import { graphql } from '@/config/gql'
 import { ExtractVariables } from '@/hooks/useFetchOnBlock'
-import { getStartAndEndDateBasedOnTime, getStartMiddleAndEndDateBasedOnTime } from '@/utils/dates'
+import { getStartAndEndDateBasedOnTime } from '@/utils/dates'
 
 export const currentSupplyDocument = graphql(`
   query currentSupply($startDate: Datetime!, $endDate: Datetime!) {
@@ -8,16 +8,23 @@ export const currentSupplyDocument = graphql(`
   }
 `)
 
-export const supplyMintBurnAndChangesDocument = graphql(`
-  query supplyMintBurnAndChanges($startDate: Datetime!, $middleDate: Datetime!, $endDate: Datetime!) {
-    currentSupply: getTotalSupplyBetweenDates(startDate: $middleDate, endDate: $endDate)
-    previousSupply: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $middleDate)
-    
-    currentMint: getMintBreakdownBetweenDates(startDate: $middleDate, endDate: $endDate)
-    previousMint: getMintBreakdownBetweenDates(startDate: $startDate, endDate: $middleDate)
-    
-    currentBurn: getBurnBreakdownBetweenDates(startDate: $middleDate, endDate: $endDate)
-    previousBurn: getBurnBreakdownBetweenDates(startDate: $startDate, endDate: $middleDate)
+// One document per aggregate function so each (function, window) pair can be cached
+// independently server-side. See app/api/supplyMetrics.ts.
+export const totalSupplyBetweenDatesDocument = graphql(`
+  query totalSupplyBetweenDates($startDate: Datetime!, $endDate: Datetime!) {
+    result: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)
+  }
+`)
+
+export const mintBreakdownBetweenDatesDocument = graphql(`
+  query mintBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {
+    result: getMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)
+  }
+`)
+
+export const burnBreakdownBetweenDatesDocument = graphql(`
+  query burnBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {
+    result: getBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)
   }
 `)
 
@@ -26,16 +33,6 @@ export function getCurrentSupplyVariables(dateStr: string, timeSelected: string)
 
   return {
     endDate: end.toISOString(),
-    startDate: start.toISOString()
-  }
-}
-
-export function getSupplyMintBurnAndChangesVariables(dateStr: string, timeSelected: string): ExtractVariables<typeof supplyMintBurnAndChangesDocument> {
-  const {start, end, middle} = getStartMiddleAndEndDateBasedOnTime(dateStr, timeSelected)
-
-  return {
-    endDate: end.toISOString(),
-    middleDate: middle.toISOString(),
     startDate: start.toISOString()
   }
 }

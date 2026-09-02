@@ -20,16 +20,14 @@ export type DocumentNodeData<T extends TypedDocumentNode<any, any>> = T extends 
 // eslint-disable-next-line
 export type ExtractVariables<T> = T extends TypedDocumentNode<any, infer Variables> ? Variables : never;
 
-export interface FetchOnBlockOptions<
-  // eslint-disable-next-line
-  T extends TypedDocumentNode<any, any>,
-  R = DocumentNodeData<T>
-> {
-  query: T
+export type FetchOnBlockFetcher<Variables, Data> = (variables: Variables) => Promise<{ data?: Data | null, error?: unknown }>
+
+export interface FetchOnBlockCoreOptions<Variables, Data, R = Data> {
+  fetcher: FetchOnBlockFetcher<Variables, Data>
   variables?:
-    | ExtractVariables<T>
-    | ((currentHeight: number, currentTime: string) => ExtractVariables<T>)
-  resultParser?: (result: DeepRequired<DocumentNodeData<T>>) => R | Promise<R>,
+    | Variables
+    | ((currentHeight: number, currentTime: string) => Variables)
+  resultParser?: (result: DeepRequired<Data>) => R | Promise<R>,
   initialResult?: R,
   initialError: boolean
   skip?: boolean,
@@ -37,12 +35,30 @@ export interface FetchOnBlockOptions<
   updateOnNewSession?: boolean
 }
 
-export default function useFetchOnBlock<
+export interface FetchOnBlockOptions<
   // eslint-disable-next-line
   T extends TypedDocumentNode<any, any>,
   R = DocumentNodeData<T>
->({
-  query,
+> extends Omit<FetchOnBlockCoreOptions<ExtractVariables<T>, DocumentNodeData<T>, R>, 'fetcher'> {
+  query: T
+}
+
+export interface FetchOnBlockResult<R> {
+  data: R | null,
+  refetch: () => void,
+  // Only error will be true when there is an error and there is no data available to return
+  error: boolean
+  // isLoading will be true when is loading the first data after refetch is executed
+  isLoading: boolean,
+}
+
+/**
+ * Re-runs `fetcher` whenever a new block arrives (or the variables change). Use this directly when
+ * the data comes from somewhere other than the indexer's GraphQL API, e.g. one of our own route
+ * handlers; `useFetchOnBlock` below is the Apollo-backed variant.
+ */
+export function useFetchOnBlockCore<Variables, Data, R = Data>({
+  fetcher,
   variables,
   resultParser,
   initialResult,
@@ -50,48 +66,36 @@ export default function useFetchOnBlock<
   pollInterval,
   initialError,
   updateOnNewSession = false
-}: FetchOnBlockOptions<T, R>): {
-  data: R | null,
-  refetch: () => void,
-  // Only error will be true when there is an error and there is no data available to return
-  error: boolean
-  // isLoading will be true when is loading the first data after refetch is executed
-  isLoading: boolean,
-} {
+}: FetchOnBlockCoreOptions<Variables, Data, R>): FetchOnBlockResult<R> {
   const lastValueRef = useRef<R | null>(initialResult || null)
   const [parsedData, setParsedData] = useState<R | null>(initialResult || null)
   const [error, setError] = useState(initialError)
   const [isLoading, setIsLoading] = useState(false)
   const {currentHeight, currentTime, firstHeight, blocksPerSession} = useHeightContext()
   const firstRenderRef = useRef(true)
-  const lastVariablesRef = useRef<FetchOnBlockOptions<T, R>['variables']>(variables)
+  const lastVariablesRef = useRef<FetchOnBlockCoreOptions<Variables, Data, R>['variables']>(variables)
   const forceLoadingRef = useRef(false)
-
-  const [fetchData] = useLazyQuery(query, {
-    fetchPolicy: 'network-only',
-    nextFetchPolicy: 'network-only',
-  })
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const fetchDataFunction = useCallback(() => {
-    // eslint-disable-next-line
-    // @ts-ignore
-    const variablesToUse = typeof variables === 'function' ? variables(currentHeight, currentTime) : variables
+    const variablesToUse = (
+      typeof variables === 'function'
+        ? (variables as (currentHeight: number, currentTime: string) => Variables)(currentHeight, currentTime)
+        : variables
+    ) as Variables
 
     const fetchDataFn = () => {
       setIsLoading(true)
-      fetchData({
-        variables: variablesToUse,
-      }).then(async ({data, error}) => {
+      fetcher(variablesToUse).then(async ({data, error}) => {
         if (data) {
           if (resultParser) {
-            const parsed = await resultParser(data)
+            const parsed = await resultParser(data as DeepRequired<Data>)
             lastValueRef.current = parsed
             setParsedData(parsed)
           } else {
-            lastValueRef.current = data
-            setParsedData(data)
+            lastValueRef.current = data as unknown as R
+            setParsedData(data as unknown as R)
           }
 
           setError(false)
@@ -115,7 +119,7 @@ export default function useFetchOnBlock<
     if (pollInterval) {
       intervalRef.current = setInterval(fetchDataFn, pollInterval)
     }
-  }, [variables, currentHeight, currentTime, resultParser, pollInterval, fetchData])
+  }, [variables, currentHeight, currentTime, resultParser, pollInterval, fetcher])
 
   useEffect(() => {
     if (firstRenderRef.current) {
@@ -146,7 +150,7 @@ export default function useFetchOnBlock<
       }
     }
     // eslint-disable-next-line
-  }, [currentHeight, query, variables])
+  }, [currentHeight, fetcher, variables])
 
   useEffect(() => {
     if (!initialResult && !initialError) {
@@ -163,4 +167,28 @@ export default function useFetchOnBlock<
     isLoading: data && !forceLoadingRef.current ? false : isLoading,
     refetch: fetchDataFunction,
   }
+}
+
+export default function useFetchOnBlock<
+  // eslint-disable-next-line
+  T extends TypedDocumentNode<any, any>,
+  R = DocumentNodeData<T>
+>({
+  query,
+  ...options
+}: FetchOnBlockOptions<T, R>): FetchOnBlockResult<R> {
+  const [fetchData] = useLazyQuery(query, {
+    fetchPolicy: 'network-only',
+    nextFetchPolicy: 'network-only',
+  })
+
+  const fetcher = useCallback<FetchOnBlockFetcher<ExtractVariables<T>, DocumentNodeData<T>>>(
+    (variables) => fetchData({ variables }),
+    [fetchData]
+  )
+
+  return useFetchOnBlockCore<ExtractVariables<T>, DocumentNodeData<T>, R>({
+    ...options,
+    fetcher,
+  })
 }
