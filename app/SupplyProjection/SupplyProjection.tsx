@@ -1,9 +1,11 @@
-import { getSupplyMetrics } from '@/api/supplyMetrics'
+import { Suspense } from 'react'
+import { getCurrentSupplyMetrics } from '@/api/supplyMetrics'
 import { getShannonSupplyByDay } from '@/api/supplyByDay'
 import { Times } from '@/utils/dates'
 import type { SupplyMetrics } from '@/Supply/types'
 import type { ShannonSupplyByDay } from '@/SupplyProjection/types'
 import ClientSupplyProjection from '@/SupplyProjection/Client'
+import { Skeleton } from '@/components/ui/skeleton'
 import morseSupply from './morseSupplyByDay.json'
 
 async function ServerSupplyProjection({selectedTime}: { selectedTime: Times}) {
@@ -12,9 +14,10 @@ async function ServerSupplyProjection({selectedTime}: { selectedTime: Times}) {
     shannonSupplyData: ShannonSupplyByDay | null = null
 
   try {
-    // Both are shared with the other supply cards / requests through the server cache.
+    // Only the current total supply is needed here; the mint/burn aggregates are not awaited so a
+    // cold cache for this time range does not hold up the chart.
     const [supplyMetricsRes, shannonSupplyUntilYesterdayData] = await Promise.all([
-      getSupplyMetrics(selectedTime),
+      getCurrentSupplyMetrics(selectedTime),
       getShannonSupplyByDay()
     ])
 
@@ -41,7 +44,16 @@ export default function SupplyProjection({selectedTime}: { selectedTime: Times})
       <div className={'h-[50px] flex items-center'}>
         <h2>Supply 2Y Projection</h2>
       </div>
-      <ServerSupplyProjection selectedTime={selectedTime} />
+      <Suspense
+        key={selectedTime}
+        fallback={(
+          <div className={'h-[360px] pb-8'}>
+            <Skeleton className={'h-full w-full'} />
+          </div>
+        )}
+      >
+        <ServerSupplyProjection selectedTime={selectedTime} />
+      </Suspense>
     </div>
   )
 }

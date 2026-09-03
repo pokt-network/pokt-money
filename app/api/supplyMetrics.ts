@@ -1,4 +1,5 @@
 import { unstable_cache } from 'next/cache'
+import { after } from 'next/server'
 import { cache } from 'react'
 import { getClient } from '@/config/apollo/rsc'
 import { getLatestBlock } from '@/api/blocks'
@@ -23,8 +24,17 @@ import { dedupeInFlight } from '@/utils/dedupeInFlight'
  * cache keys below, only change every WINDOW_BUCKET_MINUTES. Results are then kept in the Next.js
  * data cache for REVALIDATE_SECONDS, and React.cache dedupes the calls within a single render.
  */
-export const WINDOW_BUCKET_MINUTES = 5
+export const WINDOW_BUCKET_MINUTES = Number(process.env.SUPPLY_WINDOW_BUCKET_MINUTES) || 5
 const REVALIDATE_SECONDS = 15 * 60
+
+/**
+ * How long a render waits for a cold aggregate fetch before falling back to the last result for
+ * the same time range. The fetch keeps running (see `after`) and fills the cache for the next
+ * request, so the first visitor after a bucket rollover sees numbers that are at most one bucket
+ * old instead of a 30 s+ loader.
+ */
+const STALE_FALLBACK_AFTER_MS = Number(process.env.SUPPLY_STALE_FALLBACK_MS) || 2000
+const lastMetricsByRange = new Map<string, SupplyMetrics>()
 
 function cachedQuery<Result>(
   name: string,
@@ -74,36 +84,78 @@ export const getBurnBreakdownBetweenDates = cachedQuery(
   }
 )
 
-/**
- * Supply, mint and burn figures for the selected time range, anchored at the latest indexed block
- * (floored to the bucket). Only the windows the UI actually displays are queried: total supply for
- * both the current and the previous window, mint and burn for the current window only.
- */
-export const getSupplyMetrics = cache(async (time: string): Promise<SupplyMetrics> => {
+/** Query window for the selected time range, anchored at the latest indexed block floored to the bucket. */
+export const getSupplyWindow = cache(async (time: string) => {
   const timeSelected = getValidTime(time)
   const latestBlock = await getLatestBlock()
   const anchor = floorDateToMinutes(latestBlock.timestamp, WINDOW_BUCKET_MINUTES)
   const { start, middle, end } = getStartMiddleAndEndDateBasedOnTime(anchor.toISOString(), timeSelected)
 
-  const startDate = start.toISOString()
-  const middleDate = middle.toISOString()
-  const endDate = end.toISOString()
-
-  const [currentSupply, previousSupply, currentMint, currentBurn] = await Promise.all([
-    getTotalSupplyBetweenDates(middleDate, endDate),
-    getTotalSupplyBetweenDates(startDate, middleDate),
-    getMintBreakdownBetweenDates(middleDate, endDate),
-    getBurnBreakdownBetweenDates(middleDate, endDate),
-  ])
-
   return {
     timeSelected,
-    startDate,
-    middleDate,
-    endDate,
-    currentSupply,
-    previousSupply,
-    currentMint,
-    currentBurn,
+    startDate: start.toISOString(),
+    middleDate: middle.toISOString(),
+    endDate: end.toISOString(),
   }
+})
+
+function withStaleFallback(time: string, fresh: Promise<SupplyMetrics>): Promise<SupplyMetrics> {
+  const remembered = fresh.then((metrics) => {
+    lastMetricsByRange.set(time, metrics)
+    return metrics
+  })
+  // Never let a background failure surface as an unhandled rejection.
+  remembered.catch(() => {})
+
+  const stale = lastMetricsByRange.get(time)
+  if (!stale) {
+    return remembered
+  }
+
+  return new Promise<SupplyMetrics>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      // Keep the fetch alive past the end of this response so it fills the cache.
+      after(() => remembered.catch(() => {}))
+      resolve(stale)
+    }, STALE_FALLBACK_AFTER_MS)
+
+    remembered.then(
+      (metrics) => { clearTimeout(timer); resolve(metrics) },
+      (error) => { clearTimeout(timer); reject(error) },
+    )
+  })
+}
+
+/**
+ * Supply, mint and burn figures for the selected time range. Only the windows the UI actually
+ * displays are queried: total supply for both the current and the previous window, mint and burn
+ * for the current window only.
+ */
+export const getSupplyMetrics = cache((time: string): Promise<SupplyMetrics> => {
+  const fresh = (async () => {
+    const window = await getSupplyWindow(time)
+    const { startDate, middleDate, endDate } = window
+
+    const [currentSupply, previousSupply, currentMint, currentBurn] = await Promise.all([
+      getTotalSupplyBetweenDates(middleDate, endDate),
+      getTotalSupplyBetweenDates(startDate, middleDate),
+      getMintBreakdownBetweenDates(middleDate, endDate),
+      getBurnBreakdownBetweenDates(middleDate, endDate),
+    ])
+
+    return { ...window, currentSupply, previousSupply, currentMint, currentBurn }
+  })()
+
+  return withStaleFallback(getValidTime(time), fresh)
+})
+
+/**
+ * Cheap subset for components that only need the current total supply (the 2Y projection):
+ * one getTotalSupplyBetweenDates call, no mint/burn aggregates to wait for.
+ */
+export const getCurrentSupplyMetrics = cache(async (time: string): Promise<SupplyMetrics> => {
+  const window = await getSupplyWindow(time)
+  const currentSupply = await getTotalSupplyBetweenDates(window.middleDate, window.endDate)
+
+  return { ...window, currentSupply, previousSupply: null, currentMint: null, currentBurn: null }
 })
