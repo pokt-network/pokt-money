@@ -1,0 +1,27 @@
+# dependencies and build output are produced inside the image
+node_modules
+.next
+out
+build
+coverage
+
+# vcs / editor / ci
+.git
+.github
+.idea
+.vscode
+.DS_Store
+
+# local env files are never baked into the image; INDEXER_API_URL is set at runtime
+.env*
+
+# docker
+Dockerfile
+.dockerignore
+
+# misc
+*.md
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
