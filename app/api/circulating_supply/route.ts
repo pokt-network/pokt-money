@@ -16,7 +16,10 @@ export async function GET() {
       data?.morseClaimableAccounts?.aggregates?.sum?.unstakedBalanceAmount || 0
     )
 
-  return new Response(networkSupply.add(unmigratedSupply).minus(data?.dao || 0).div(1e6).toString(), {
+  // DAO tokens have no lock and can be sold at any moment, so they count as circulating and
+  // circulating supply equals total supply. The DAO balance is still queried above in case the
+  // subtraction is needed again later.
+  return new Response(networkSupply.add(unmigratedSupply).div(1e6).toString(), {
     headers: { 'Content-Type': 'text/plain' }
   })
 }
