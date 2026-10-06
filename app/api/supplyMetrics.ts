@@ -4,8 +4,8 @@ import { cache } from 'react'
 import { getClient } from '@/config/apollo/rsc'
 import { getLatestBlock } from '@/api/blocks'
 import {
-  burnBreakdownBetweenDatesDocument,
-  mintBreakdownBetweenDatesDocument,
+  legacyBurnBreakdownBetweenDatesDocument,
+  legacyMintBreakdownBetweenDatesDocument,
   totalSupplyBetweenDatesDocument,
 } from '@/Supply/operations'
 import type {
@@ -18,11 +18,11 @@ import { floorDateToMinutes, getStartMiddleAndEndDateBasedOnTime, getValidTime }
 import { dedupeInFlight } from '@/utils/dedupeInFlight'
 
 /**
- * The indexer's *BetweenDates aggregate functions are expensive (tens of seconds and ~20 GB of
- * disk reads per call, independent of the window size), so we never call them with raw block
- * timestamps. The window end is floored to a bucket so the query variables, and therefore the
- * cache keys below, only change every WINDOW_BUCKET_MINUTES. Results are then kept in the Next.js
- * data cache for REVALIDATE_SECONDS, and React.cache dedupes the calls within a single render.
+ * The indexer's *BetweenDates aggregate functions are the most expensive calls this app makes, so we
+ * never call them with raw block timestamps. The window end is floored to a bucket so the query
+ * variables, and therefore the cache keys below, only change every WINDOW_BUCKET_MINUTES. Results
+ * are then kept in the Next.js data cache for REVALIDATE_SECONDS, and React.cache dedupes the calls
+ * within a single render.
  */
 export const WINDOW_BUCKET_MINUTES = Number(process.env.SUPPLY_WINDOW_BUCKET_MINUTES) || 5
 const REVALIDATE_SECONDS = 15 * 60
@@ -61,10 +61,11 @@ export const getTotalSupplyBetweenDates = cachedQuery(
 )
 
 export const getMintBreakdownBetweenDates = cachedQuery(
-  'mint_breakdown_between_dates',
+  // The source is in the cache key, so a deploy never serves a value cached from the live function.
+  'legacy_mint_breakdown_between_dates',
   async (startDate, endDate): Promise<MintBreakdownBetweenDates | null> => {
     const { data } = await getClient().query({
-      query: mintBreakdownBetweenDatesDocument,
+      query: legacyMintBreakdownBetweenDatesDocument,
       variables: { startDate, endDate },
     })
 
@@ -73,10 +74,10 @@ export const getMintBreakdownBetweenDates = cachedQuery(
 )
 
 export const getBurnBreakdownBetweenDates = cachedQuery(
-  'burn_breakdown_between_dates',
+  'legacy_burn_breakdown_between_dates',
   async (startDate, endDate): Promise<BurnBreakdownBetweenDates | null> => {
     const { data } = await getClient().query({
-      query: burnBreakdownBetweenDatesDocument,
+      query: legacyBurnBreakdownBetweenDatesDocument,
       variables: { startDate, endDate },
     })
 
