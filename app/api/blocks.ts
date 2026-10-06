@@ -2,16 +2,15 @@ import { unstable_cache } from 'next/cache'
 import { cache } from 'react'
 import { getClient } from '@/config/apollo/rsc'
 import { latestBlockQuery, numBlocksPerSessionDocument } from '@/api/operations'
-import { Block } from '@/config/gql/graphql'
 
 export const getLatestBlock = cache(
   unstable_cache(
-    async (): Promise<Block> => {
+    async () => {
       const {data} = await getClient().query({
         query: latestBlockQuery
       })
 
-      return data!.blocks!.nodes!.at(0)! as unknown as Block
+      return data!.blocks!.nodes!.at(0)!
     },
     ['latest_block'],
     { revalidate: 30}

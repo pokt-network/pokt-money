@@ -57,7 +57,8 @@ export default function HeightContextProvider({
     const block = data?.blocks?.nodes[0]
     const newBlockId = Number(block?.id)
 
-    if (block && newBlockId > currentHeight) {
+    // currentHeight is NaN when the layout could not read the latest block: take the first one polled
+    if (block && (Number.isNaN(currentHeight) || newBlockId > currentHeight)) {
       setState({
         currentHeight: newBlockId,
         currentTime: block.timestamp || currentTime,
