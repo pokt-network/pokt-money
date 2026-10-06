@@ -2,9 +2,12 @@ import { unstable_cache } from 'next/cache'
 import { cache } from 'react'
 import { getClient } from '@/config/apollo/rsc'
 import { latestBlockQuery, numBlocksPerSessionDocument } from '@/api/operations'
+import { freshCache } from '@/utils/freshCache'
 
+// Anchors every query window, so it must not lag after an idle period (see freshCache).
 export const getLatestBlock = cache(
-  unstable_cache(
+  freshCache(
+    'latest_block',
     async () => {
       const {data} = await getClient().query({
         query: latestBlockQuery
@@ -12,8 +15,7 @@ export const getLatestBlock = cache(
 
       return data!.blocks!.nodes!.at(0)!
     },
-    ['latest_block'],
-    { revalidate: 30}
+    30 * 1000
   )
 )
 
