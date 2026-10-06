@@ -4,15 +4,17 @@ import { useFetchOnBlockCore } from "@/hooks/useFetchOnBlock";
 import { fetchSupplyMetrics } from '@/Supply/fetchSupplyMetrics'
 import type { SupplyMetrics } from '@/Supply/types'
 import { Times } from '@/utils/dates'
-import React from 'react'
+import React, { useMemo } from 'react'
 import SupplyMintBurnLoader from '@/Supply/Changes/Loader'
 import RetryError from '@/components/ErrorRetry'
 import { formatUpokt } from '@/utils/formatAmounts'
+import { describePartialRange, NO_DATA_NOTE } from '@/utils/moneyRange'
 import Big from 'big.js'
 import clsx from 'clsx'
 
 interface ChangeProps {
-  current: string | number
+  // null: nothing in the range is covered
+  current: string | number | null
   label: string
 }
 
@@ -23,7 +25,7 @@ function Change({current, label}: ChangeProps) {
         {label}
       </p>
       <p className={'text-xs font-medium'}>
-        {formatUpokt({
+        {current === null ? '-' : formatUpokt({
           amount: current,
           includeSymbol: false,
           maxDecimals: 2
@@ -52,6 +54,17 @@ export default function ClientSupplyMintBurn({
     initialResult: initialData,
     initialError,
   })
+
+  // The range note describes the figures shown; an unknown one gets its own line, in display order,
+  // unless both are unknown and the range note already says so.
+  const notes = useMemo(() => {
+    const rangeNote = describePartialRange(data?.currentMintBurnRange)
+    const uncovered = data?.uncoveredFigures ?? []
+    const unknown = rangeNote === NO_DATA_NOTE ? [] : (['burn', 'mint'] as const)
+      .filter((figure) => uncovered.includes(figure))
+      .map((figure) => `${figure === 'mint' ? 'Mint' : 'Burn'}: ${NO_DATA_NOTE.toLowerCase()}`)
+    return [...(rangeNote ? [rangeNote] : []), ...unknown]
+  }, [data])
 
   if (isLoading) {
     return <SupplyMintBurnLoader />
@@ -109,15 +122,21 @@ export default function ClientSupplyMintBurn({
         </div>
 
         <div className={'flex flex-row items-center gap-4 -mt-3'}>
+          {/* null mint or burn is unknown (getSupplyMetrics decides it), which must not read as 0 */}
           <Change
-            current={data?.currentBurn?.burn_mint || 0}
+            current={data?.currentBurn ? data.currentBurn.burn_mint || 0 : null}
             label={'Burn'}
           />
           <Change
-            current={(data?.currentMint?.mint_burn || 0) + (data?.currentMint?.inflation || 0)}
+            current={data?.currentMint ? (data.currentMint.mint_burn || 0) + (data.currentMint.inflation || 0) : null}
             label={'Mint'}
           />
         </div>
+        {notes.map((note) => (
+          <p key={note} className={'w-full -mt-3 text-[11px] text-[color:var(--secondary-foreground)]'}>
+            {note}
+          </p>
+        ))}
       </div>
     )
   }
