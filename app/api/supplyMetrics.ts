@@ -20,6 +20,7 @@ import type {
 import { floorDateToMinutes, getStartMiddleAndEndDateBasedOnTime, getValidTime } from '@/utils/dates'
 import { dedupeInFlight } from '@/utils/dedupeInFlight'
 import { isMoneyCoverageError } from '@/utils/moneyCoverage'
+import { readRangedFigures } from '@/utils/moneyRange'
 
 /**
  * The indexer's *BetweenDates aggregate functions are the most expensive calls this app makes, so we
@@ -67,9 +68,11 @@ export const getTotalSupplyBetweenDates = cachedQuery(
 type BetweenDatesDocument<Result> = TypedDocumentNode<{ result?: Result | null }, { startDate: string, endDate: string }>
 
 /**
- * The legacy* functions (see app/Supply/operations.ts) raise for a range the indexer's money tables
- * do not cover (before the first written settlement, or over a settlement gap). Only that error falls
- * back to the live function, so a window that answered before still answers.
+ * Only for the indexer's bare shape: there the legacy* functions (see app/Supply/operations.ts) raise
+ * for a range its money tables do not cover (before the first written settlement, or over a
+ * settlement gap), and only that error falls back to the live function, so a window that answered
+ * before still answers. The {range, data} shape never raises for coverage, so it never takes this
+ * path: its uncovered windows come back as unknown (see readRangedFigures).
  */
 async function queryWithLiveFallback<Result>(
   legacyQuery: BetweenDatesDocument<Result>,
@@ -95,10 +98,13 @@ async function queryWithLiveFallback<Result>(
 }
 
 export const getMintBreakdownBetweenDates = cachedQuery(
-  // New key, so a deploy never serves a value cached by the previous release. For a range outside
-  // the money coverage the value under it comes from the live function (queryWithLiveFallback).
+  // The legacy_ prefix keeps values cached by releases that read the live function out of this key.
+  // The value is the raw answer in either of the indexer's shapes (bare JSON or {range, data}), which
+  // getSupplyMetrics reads; with the bare shape, a range outside the money coverage comes from the
+  // live function (queryWithLiveFallback).
   'legacy_mint_breakdown_between_dates',
-  (startDate, endDate): Promise<MintBreakdownBetweenDates | null> => queryWithLiveFallback(
+  // The raw answer, in either shape (see unwrapRange): getSupplyMetrics unwraps it.
+  (startDate, endDate): Promise<unknown> => queryWithLiveFallback(
     legacyMintBreakdownBetweenDatesDocument,
     mintBreakdownBetweenDatesDocument,
     startDate,
@@ -108,7 +114,7 @@ export const getMintBreakdownBetweenDates = cachedQuery(
 
 export const getBurnBreakdownBetweenDates = cachedQuery(
   'legacy_burn_breakdown_between_dates',
-  (startDate, endDate): Promise<BurnBreakdownBetweenDates | null> => queryWithLiveFallback(
+  (startDate, endDate): Promise<unknown> => queryWithLiveFallback(
     legacyBurnBreakdownBetweenDatesDocument,
     burnBreakdownBetweenDatesDocument,
     startDate,
@@ -168,14 +174,28 @@ export const getSupplyMetrics = cache((time: string): Promise<SupplyMetrics> => 
     const window = await getSupplyWindow(time)
     const { startDate, middleDate, endDate } = window
 
-    const [currentSupply, previousSupply, currentMint, currentBurn] = await Promise.all([
+    const [currentSupply, previousSupply, rawMint, rawBurn] = await Promise.all([
       getTotalSupplyBetweenDates(middleDate, endDate),
       getTotalSupplyBetweenDates(startDate, middleDate),
       getMintBreakdownBetweenDates(middleDate, endDate),
       getBurnBreakdownBetweenDates(middleDate, endDate),
     ])
 
-    return { ...window, currentSupply, previousSupply, currentMint, currentBurn }
+    // null mint or burn means unknown (its range covers nothing); the clients only read that. The
+    // range is present only when the indexer reports one, so the bare shape's JSON is unchanged.
+    const { a: mint, b: burn, range: currentMintBurnRange } =
+      readRangedFigures<MintBreakdownBetweenDates, BurnBreakdownBetweenDates>(rawMint, rawBurn)
+    const uncoveredFigures = [...(mint.uncovered ? ['mint' as const] : []), ...(burn.uncovered ? ['burn' as const] : [])]
+
+    return {
+      ...window,
+      currentSupply,
+      previousSupply,
+      currentMint: mint.value,
+      currentBurn: burn.value,
+      ...(currentMintBurnRange && { currentMintBurnRange }),
+      ...(uncoveredFigures.length > 0 && { uncoveredFigures }),
+    }
   })()
 
   return withStaleFallback(getValidTime(time), fresh)
