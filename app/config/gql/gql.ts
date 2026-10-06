@@ -15,8 +15,6 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  */
 type Documents = {
     "\n  query getCUTTMEvolution($startDate: Datetime!, $endDate: Datetime!, $truncInterval: String!) {\n    getComputeUnitsToTokensMultiplierEvolution(startDate: $startDate, endDate: $endDate, truncInterval: $truncInterval)\n  }\n": typeof types.GetCuttmEvolutionDocument,
-    "\n  query currentSupplyMintBurn($startDate: Datetime!, $endDate: Datetime!) {\n    supply: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n    mint: getMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n    burn: getBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": typeof types.CurrentSupplyMintBurnDocument,
-    "\n  query currentSupply($startDate: Datetime!, $endDate: Datetime!) {\n    currentSupply: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": typeof types.CurrentSupplyDocument,
     "\n  query totalSupplyBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": typeof types.TotalSupplyBetweenDatesDocument,
     "\n  query legacyMintBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: legacyMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": typeof types.LegacyMintBreakdownBetweenDatesDocument,
     "\n  query legacyBurnBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: legacyBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": typeof types.LegacyBurnBreakdownBetweenDatesDocument,
@@ -31,8 +29,6 @@ type Documents = {
 };
 const documents: Documents = {
     "\n  query getCUTTMEvolution($startDate: Datetime!, $endDate: Datetime!, $truncInterval: String!) {\n    getComputeUnitsToTokensMultiplierEvolution(startDate: $startDate, endDate: $endDate, truncInterval: $truncInterval)\n  }\n": types.GetCuttmEvolutionDocument,
-    "\n  query currentSupplyMintBurn($startDate: Datetime!, $endDate: Datetime!) {\n    supply: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n    mint: getMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n    burn: getBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": types.CurrentSupplyMintBurnDocument,
-    "\n  query currentSupply($startDate: Datetime!, $endDate: Datetime!) {\n    currentSupply: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": types.CurrentSupplyDocument,
     "\n  query totalSupplyBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": types.TotalSupplyBetweenDatesDocument,
     "\n  query legacyMintBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: legacyMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": types.LegacyMintBreakdownBetweenDatesDocument,
     "\n  query legacyBurnBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: legacyBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": types.LegacyBurnBreakdownBetweenDatesDocument,
@@ -64,14 +60,6 @@ export function graphql(source: string): unknown;
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query getCUTTMEvolution($startDate: Datetime!, $endDate: Datetime!, $truncInterval: String!) {\n    getComputeUnitsToTokensMultiplierEvolution(startDate: $startDate, endDate: $endDate, truncInterval: $truncInterval)\n  }\n"): (typeof documents)["\n  query getCUTTMEvolution($startDate: Datetime!, $endDate: Datetime!, $truncInterval: String!) {\n    getComputeUnitsToTokensMultiplierEvolution(startDate: $startDate, endDate: $endDate, truncInterval: $truncInterval)\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query currentSupplyMintBurn($startDate: Datetime!, $endDate: Datetime!) {\n    supply: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n    mint: getMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n    burn: getBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n"): (typeof documents)["\n  query currentSupplyMintBurn($startDate: Datetime!, $endDate: Datetime!) {\n    supply: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n    mint: getMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n    burn: getBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query currentSupply($startDate: Datetime!, $endDate: Datetime!) {\n    currentSupply: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n"): (typeof documents)["\n  query currentSupply($startDate: Datetime!, $endDate: Datetime!) {\n    currentSupply: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
