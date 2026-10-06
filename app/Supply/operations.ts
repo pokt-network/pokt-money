@@ -25,3 +25,16 @@ export const legacyBurnBreakdownBetweenDatesDocument = graphql(`
     result: legacyBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)
   }
 `)
+
+// The live functions, read only for a range the money tables do not cover. See app/api/supplyMetrics.ts.
+export const mintBreakdownBetweenDatesDocument = graphql(`
+  query mintBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {
+    result: getMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)
+  }
+`)
+
+export const burnBreakdownBetweenDatesDocument = graphql(`
+  query burnBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {
+    result: getBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)
+  }
+`)

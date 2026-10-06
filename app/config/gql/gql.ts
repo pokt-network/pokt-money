@@ -18,6 +18,8 @@ type Documents = {
     "\n  query totalSupplyBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": typeof types.TotalSupplyBetweenDatesDocument,
     "\n  query legacyMintBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: legacyMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": typeof types.LegacyMintBreakdownBetweenDatesDocument,
     "\n  query legacyBurnBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: legacyBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": typeof types.LegacyBurnBreakdownBetweenDatesDocument,
+    "\n  query mintBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: getMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": typeof types.MintBreakdownBetweenDatesDocument,
+    "\n  query burnBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: getBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": typeof types.BurnBreakdownBetweenDatesDocument,
     "\n  query getTotalSupplyByDay($startDate: Datetime!, $endDate: Datetime!) {\n    getTotalSupplyByDay(startDate: $startDate, endDate: $endDate)\n  }\n": typeof types.GetTotalSupplyByDayDocument,
     "\n  query latestBlock {\n    blocks(orderBy: ID_DESC, first: 1) {\n      nodes {\n        id\n        timestamp\n      }\n    }\n  }\n": typeof types.LatestBlockDocument,
     "\n  query status {\n    blocks(orderBy: ID_DESC, first: 1) {\n      nodes {\n        id\n        timestamp\n      }\n    }\n    _metadata {\n      targetHeight\n      lastProcessedHeight\n    }\n  }\n": typeof types.StatusDocument,
@@ -32,6 +34,8 @@ const documents: Documents = {
     "\n  query totalSupplyBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: getTotalSupplyBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": types.TotalSupplyBetweenDatesDocument,
     "\n  query legacyMintBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: legacyMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": types.LegacyMintBreakdownBetweenDatesDocument,
     "\n  query legacyBurnBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: legacyBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": types.LegacyBurnBreakdownBetweenDatesDocument,
+    "\n  query mintBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: getMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": types.MintBreakdownBetweenDatesDocument,
+    "\n  query burnBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: getBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n": types.BurnBreakdownBetweenDatesDocument,
     "\n  query getTotalSupplyByDay($startDate: Datetime!, $endDate: Datetime!) {\n    getTotalSupplyByDay(startDate: $startDate, endDate: $endDate)\n  }\n": types.GetTotalSupplyByDayDocument,
     "\n  query latestBlock {\n    blocks(orderBy: ID_DESC, first: 1) {\n      nodes {\n        id\n        timestamp\n      }\n    }\n  }\n": types.LatestBlockDocument,
     "\n  query status {\n    blocks(orderBy: ID_DESC, first: 1) {\n      nodes {\n        id\n        timestamp\n      }\n    }\n    _metadata {\n      targetHeight\n      lastProcessedHeight\n    }\n  }\n": types.StatusDocument,
@@ -72,6 +76,14 @@ export function graphql(source: "\n  query legacyMintBreakdownBetweenDates($star
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query legacyBurnBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: legacyBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n"): (typeof documents)["\n  query legacyBurnBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: legacyBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query mintBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: getMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n"): (typeof documents)["\n  query mintBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: getMintBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query burnBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: getBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n"): (typeof documents)["\n  query burnBreakdownBetweenDates($startDate: Datetime!, $endDate: Datetime!) {\n    result: getBurnBreakdownBetweenDates(startDate: $startDate, endDate: $endDate)\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
