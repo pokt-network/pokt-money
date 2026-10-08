@@ -75,6 +75,8 @@ export function useFetchOnBlockCore<Variables, Data, R = Data>({
   const firstRenderRef = useRef(true)
   const lastVariablesRef = useRef<FetchOnBlockCoreOptions<Variables, Data, R>['variables']>(variables)
   const forceLoadingRef = useRef(false)
+  // Only the latest request may set state: an older one (previous time range or block) can resolve later.
+  const requestIdRef = useRef(0)
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -86,11 +88,17 @@ export function useFetchOnBlockCore<Variables, Data, R = Data>({
     ) as Variables
 
     const fetchDataFn = () => {
+      const requestId = ++requestIdRef.current
+      const isLatest = () => requestId === requestIdRef.current
+
       setIsLoading(true)
       fetcher(variablesToUse).then(async ({data, error}) => {
+        if (!isLatest()) return
+
         if (data) {
           if (resultParser) {
             const parsed = await resultParser(data as DeepRequired<Data>)
+            if (!isLatest()) return
             lastValueRef.current = parsed
             setParsedData(parsed)
           } else {
@@ -105,8 +113,11 @@ export function useFetchOnBlockCore<Variables, Data, R = Data>({
           setError(true)
         }
       })
-        .catch(() => setError(true))
+        .catch(() => {
+          if (isLatest()) setError(true)
+        })
         .finally(() => {
+          if (!isLatest()) return
           setIsLoading(false)
           if (forceLoadingRef.current) {
             forceLoadingRef.current = false

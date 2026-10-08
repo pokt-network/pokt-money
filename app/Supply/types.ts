@@ -1,4 +1,5 @@
 import type { Times } from '@/utils/dates'
+import type { MoneyRange } from '@/utils/moneyRange'
 
 // Shapes of the JSON scalars returned by the indexer's supply aggregate functions.
 export interface TotalSupplyBetweenDates {
@@ -28,4 +29,9 @@ export interface SupplyMetrics {
   previousSupply: TotalSupplyBetweenDates | null
   currentMint: MintBreakdownBetweenDates | null
   currentBurn: BurnBreakdownBetweenDates | null
+  // The part of [middleDate, endDate] the mint and burn figures cover; absent while the indexer
+  // answers without ranges.
+  currentMintBurnRange?: MoneyRange
+  // The figures that are null because the indexer reports nothing covered for them; absent otherwise.
+  uncoveredFigures?: Array<'mint' | 'burn'>
 }

@@ -1,17 +1,20 @@
 'use client'
 
-import { useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
 import type { TooltipItem } from 'chart.js'
 import { normalizeIsoDate, Times } from '@/utils/dates'
 import BaseLineBarChart from '@/components/BaseLineBarChart'
 import RetryError from '@/components/ErrorRetry'
-import useFetchOnBlock from '@/hooks/useFetchOnBlock'
+import { useFetchOnBlockCore } from '@/hooks/useFetchOnBlock'
 import {
-  getCUTTMEvolutionDocument,
   getCUTTMEvolutionVariables,
   type CUTTMItem,
 } from '@/CUTTMEvolution/operations'
+import { fetchCachedRoute } from '@/utils/fetchCachedRoute'
+import type { CUTTMEvolutionResult } from '@/api/cuttm'
 import { fillChartData } from '@/utils/chart'
+
+const fetchCUTTMEvolution = (time: string) => fetchCachedRoute<CUTTMEvolutionResult>('cuttm_evolution', time)
 
 interface ProcessedItem {
   id: string
@@ -33,19 +36,17 @@ interface ClientCUTTMEvolutionProps {
 export default function ClientCUTTMEvolution({
   selectedTime,
 }: ClientCUTTMEvolutionProps) {
-  const variables = useCallback((_: number, timestamp: string) => {
-    return getCUTTMEvolutionVariables(timestamp, selectedTime)
-  }, [selectedTime])
-
-  const { data, error, refetch, isLoading } = useFetchOnBlock({
-    query: getCUTTMEvolutionDocument,
-    variables,
+  // Refreshes on every block through our own route handler, which serves the server-side cache.
+  const { data, error, refetch, isLoading } = useFetchOnBlockCore({
+    fetcher: fetchCUTTMEvolution,
+    variables: selectedTime,
     initialError: false
   })
 
   const { processedData, truncInterval } = useMemo(() => {
-    const vars = getCUTTMEvolutionVariables(new Date().toISOString(), selectedTime)
-    const items: Array<ProcessedItem> = (data?.getComputeUnitsToTokensMultiplierEvolution ?? []).map((item: CUTTMItem) => {
+    // Fill the chart over the window the route queried; before the first answer, over the one ending now.
+    const vars = data?.variables ?? getCUTTMEvolutionVariables(new Date().toISOString(), selectedTime)
+    const items: Array<ProcessedItem> = (data?.data?.getComputeUnitsToTokensMultiplierEvolution ?? []).map((item: CUTTMItem) => {
       const normalized = normalizeIsoDate(item.date_truncated)
       return {
         id: normalized,

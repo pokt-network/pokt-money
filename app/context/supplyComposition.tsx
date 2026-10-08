@@ -1,9 +1,13 @@
 'use client'
 
-import useFetchOnBlock, { DocumentNodeData, ExtractVariables } from '@/hooks/useFetchOnBlock'
-import { getSupplyCompositionVariables, supplyCompositionDocument } from '@/api/operations'
-import React, { useCallback, useRef } from 'react'
+import { DocumentNodeData, ExtractVariables, useFetchOnBlockCore } from '@/hooks/useFetchOnBlock'
+import { supplyCompositionDocument } from '@/api/operations'
+import { fetchCachedRoute } from '@/utils/fetchCachedRoute'
+import type { SupplyCompositionResult } from '@/api/supply'
+import React from 'react'
 import { Times } from '@/utils/dates'
+
+const fetchSupplyComposition = (time: string) => fetchCachedRoute<SupplyCompositionResult>('supply_composition', time)
 
 interface SupplyCompositionContext {
   data: DocumentNodeData<typeof supplyCompositionDocument> | null
@@ -36,26 +40,22 @@ export default function SupplyCompositionProvider({
   initialError,
   initialVariables,
 }: SupplyCompositionProps) {
-  const lastVariables = useRef<ExtractVariables<typeof supplyCompositionDocument> | null>(initialVariables)
-
-  const variables = useCallback((_: number, timestamp: string) => {
-    return lastVariables.current = getSupplyCompositionVariables(timestamp, selectedTime)
-  }, [selectedTime])
-
-  const {data, error, refetch, isLoading} = useFetchOnBlock({
-    query: supplyCompositionDocument,
-    variables,
-    initialResult: initialData,
+  // Refreshes on every block through our own route handler, which serves the server-side cache
+  // and returns the window it queried along with the data.
+  const {data: result, error, refetch, isLoading} = useFetchOnBlockCore({
+    fetcher: fetchSupplyComposition,
+    variables: selectedTime,
+    initialResult: initialData && initialVariables ? { data: initialData, variables: initialVariables } : undefined,
     initialError: initialError,
   })
 
   return (
     <SupplyCompositionContext
       value={{
-        data,
+        data: result?.data ?? null,
         isLoading,
         refetch,
-        lastVariables: lastVariables.current,
+        lastVariables: result?.variables ?? null,
         error,
       }}
     >

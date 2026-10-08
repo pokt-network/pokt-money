@@ -59,7 +59,8 @@ export default async function RootLayout({
         <ReactQueryProvider initialPriceData={price}>
           <ApolloWrapper url={process.env.INDEXER_API_URL!}>
             <HeightContextProvider
-              firstHeight={latestBlock?.id}
+              // the id is a BigFloat, which the api sends as a string
+              firstHeight={Number(latestBlock?.id)}
               networkHeight={metadata?._metadata?.targetHeight || 0}
               blocksPerSession={blocksPerSession}
               // the timestamp is in UTC, so we need to add the Z to the end because the api doesn't include it
